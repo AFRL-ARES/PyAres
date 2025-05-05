@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+service AresPlannerGrpc {
+	rpc Plan (PlanRequest) returns (PlanResponse);
+}
+
+message PlanRequest {
+  repeated PlanningParameter planning_parameters = 1;
+}
+
+message PlanResponse {
+  repeated string parameter_names = 1;
+  repeated double parameter_values = 2;
+}
+
+message PlanningParameter {
+  string parameter_name = 1;
+  double parameter_value = 2;
+  double minimum_value = 3;
+  double maximum_value = 4;
+  double minimum_precision = 5;
+  repeated double parameter_history = 6;
+  string data_type = 7;
+  Metadata metadata = 8;
+  bool is_planned = 9;
+  bool is_result = 10;
+}
+
+message PlannedParameter {
+  string parameter_name = 1;
+  double parameter_value = 2;
+  Metadata metadata = 3;
+}
+
+//This is sort of a place holder for now, until we (or atleast I) understand our needs better
+message Metadata {
+    string metadata_name = 1;
+}
