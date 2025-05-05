@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+service PrintingAnalyzerGrpc {
+	rpc Analyze (AnalyzePrint) returns (PrintAnalysisResponse);
+}
+
+message AnalyzePrint {
+	bytes image = 1;
+}
+
+message PrintAnalysisResponse {
+	double value = 1;
+}

@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import print_analyzer_pb2 as print__analyzer__pb2
+from . import print_analyzer_pb2 as print__analyzer__pb2
 
 GRPC_GENERATED_VERSION = '1.71.0'
 GRPC_VERSION = grpc.__version__
@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class PrintingAnalyzerStub(object):
+class PrintingAnalyzerGrpcStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -34,43 +34,43 @@ class PrintingAnalyzerStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Analyzer = channel.unary_unary(
-                '/printing_analyzer.PrintingAnalyzer/Analyzer',
+        self.Analyze = channel.unary_unary(
+                '/PrintingAnalyzerGrpc/Analyze',
                 request_serializer=print__analyzer__pb2.AnalyzePrint.SerializeToString,
-                response_deserializer=print__analyzer__pb2.AnalysisResponse.FromString,
+                response_deserializer=print__analyzer__pb2.PrintAnalysisResponse.FromString,
                 _registered_method=True)
 
 
-class PrintingAnalyzerServicer(object):
+class PrintingAnalyzerGrpcServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def Analyzer(self, request, context):
+    def Analyze(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_PrintingAnalyzerServicer_to_server(servicer, server):
+def add_PrintingAnalyzerGrpcServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Analyzer': grpc.unary_unary_rpc_method_handler(
-                    servicer.Analyzer,
+            'Analyze': grpc.unary_unary_rpc_method_handler(
+                    servicer.Analyze,
                     request_deserializer=print__analyzer__pb2.AnalyzePrint.FromString,
-                    response_serializer=print__analyzer__pb2.AnalysisResponse.SerializeToString,
+                    response_serializer=print__analyzer__pb2.PrintAnalysisResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'printing_analyzer.PrintingAnalyzer', rpc_method_handlers)
+            'PrintingAnalyzerGrpc', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('printing_analyzer.PrintingAnalyzer', rpc_method_handlers)
+    server.add_registered_method_handlers('PrintingAnalyzerGrpc', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class PrintingAnalyzer(object):
+class PrintingAnalyzerGrpc(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def Analyzer(request,
+    def Analyze(request,
             target,
             options=(),
             channel_credentials=None,
@@ -83,9 +83,9 @@ class PrintingAnalyzer(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/printing_analyzer.PrintingAnalyzer/Analyzer',
+            '/PrintingAnalyzerGrpc/Analyze',
             print__analyzer__pb2.AnalyzePrint.SerializeToString,
-            print__analyzer__pb2.AnalysisResponse.FromString,
+            print__analyzer__pb2.PrintAnalysisResponse.FromString,
             options,
             channel_credentials,
             insecure,

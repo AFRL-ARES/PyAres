@@ -24,23 +24,23 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12\x61res_planner.proto\">\n\x0bPlanRequest\x12/\n\x13planning_parameters\x18\x01 \x03(\x0b\x32\x12.PlanningParameter\"A\n\x0cPlanResponse\x12\x17\n\x0fparameter_names\x18\x01 \x03(\t\x12\x18\n\x10parameter_values\x18\x02 \x03(\x01\"\xff\x01\n\x11PlanningParameter\x12\x16\n\x0eparameter_name\x18\x01 \x01(\t\x12\x17\n\x0fparameter_value\x18\x02 \x01(\x01\x12\x15\n\rminimum_value\x18\x03 \x01(\x01\x12\x15\n\rmaximum_value\x18\x04 \x01(\x01\x12\x19\n\x11minimum_precision\x18\x05 \x01(\x01\x12\x19\n\x11parameter_history\x18\x06 \x03(\x01\x12\x11\n\tdata_type\x18\x07 \x01(\t\x12\x1b\n\x08metadata\x18\x08 \x01(\x0b\x32\t.Metadata\x12\x12\n\nis_planned\x18\t \x01(\x08\x12\x11\n\tis_result\x18\n \x01(\x08\"`\n\x10PlannedParameter\x12\x16\n\x0eparameter_name\x18\x01 \x01(\t\x12\x17\n\x0fparameter_value\x18\x02 \x01(\x01\x12\x1b\n\x08metadata\x18\x03 \x01(\x0b\x32\t.Metadata\"!\n\x08Metadata\x12\x15\n\rmetadata_name\x18\x01 \x01(\t26\n\x0f\x41resPlannerGrpc\x12#\n\x04Plan\x12\x0c.PlanRequest\x1a\r.PlanResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12\x61res_planner.proto\x12\x0b\x41resPlanner\"J\n\x0bPlanRequest\x12;\n\x13planning_parameters\x18\x01 \x03(\x0b\x32\x1e.AresPlanner.PlanningParameter\"A\n\x0cPlanResponse\x12\x17\n\x0fparameter_names\x18\x01 \x03(\t\x12\x18\n\x10parameter_values\x18\x02 \x03(\x01\"\x8b\x02\n\x11PlanningParameter\x12\x16\n\x0eparameter_name\x18\x01 \x01(\t\x12\x17\n\x0fparameter_value\x18\x02 \x01(\x01\x12\x15\n\rminimum_value\x18\x03 \x01(\x01\x12\x15\n\rmaximum_value\x18\x04 \x01(\x01\x12\x19\n\x11minimum_precision\x18\x05 \x01(\x01\x12\x19\n\x11parameter_history\x18\x06 \x03(\x01\x12\x11\n\tdata_type\x18\x07 \x01(\t\x12\'\n\x08metadata\x18\x08 \x01(\x0b\x32\x15.AresPlanner.Metadata\x12\x12\n\nis_planned\x18\t \x01(\x08\x12\x11\n\tis_result\x18\n \x01(\x08\"l\n\x10PlannedParameter\x12\x16\n\x0eparameter_name\x18\x01 \x01(\t\x12\x17\n\x0fparameter_value\x18\x02 \x01(\x01\x12\'\n\x08metadata\x18\x03 \x01(\x0b\x32\x15.AresPlanner.Metadata\"!\n\x08Metadata\x12\x15\n\rmetadata_name\x18\x01 \x01(\t2N\n\x0f\x41resPlannerGrpc\x12;\n\x04Plan\x12\x18.AresPlanner.PlanRequest\x1a\x19.AresPlanner.PlanResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ares_planner_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_PLANREQUEST']._serialized_start=22
-  _globals['_PLANREQUEST']._serialized_end=84
-  _globals['_PLANRESPONSE']._serialized_start=86
-  _globals['_PLANRESPONSE']._serialized_end=151
-  _globals['_PLANNINGPARAMETER']._serialized_start=154
-  _globals['_PLANNINGPARAMETER']._serialized_end=409
-  _globals['_PLANNEDPARAMETER']._serialized_start=411
-  _globals['_PLANNEDPARAMETER']._serialized_end=507
-  _globals['_METADATA']._serialized_start=509
-  _globals['_METADATA']._serialized_end=542
-  _globals['_ARESPLANNERGRPC']._serialized_start=544
-  _globals['_ARESPLANNERGRPC']._serialized_end=598
+  _globals['_PLANREQUEST']._serialized_start=35
+  _globals['_PLANREQUEST']._serialized_end=109
+  _globals['_PLANRESPONSE']._serialized_start=111
+  _globals['_PLANRESPONSE']._serialized_end=176
+  _globals['_PLANNINGPARAMETER']._serialized_start=179
+  _globals['_PLANNINGPARAMETER']._serialized_end=446
+  _globals['_PLANNEDPARAMETER']._serialized_start=448
+  _globals['_PLANNEDPARAMETER']._serialized_end=556
+  _globals['_METADATA']._serialized_start=558
+  _globals['_METADATA']._serialized_end=591
+  _globals['_ARESPLANNERGRPC']._serialized_start=593
+  _globals['_ARESPLANNERGRPC']._serialized_end=671
 # @@protoc_insertion_point(module_scope)

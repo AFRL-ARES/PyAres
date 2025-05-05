@@ -9,14 +9,13 @@ class AresPlanner(ares_planner_pb2_grpc.AresPlannerGrpc):
         self.port = port
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         ares_planner_pb2_grpc.add_AresPlannerGrpcServicer_to_server(self, self.server)
-        self.server.add_insecure_port("localhost:" + self.port)
-        #Should probably actually be wait_for_termination, but changed for testing purposes
-        #server.start()
+        self.server.add_insecure_port(f"localhost:{port}")
 
     def start(self):
         if self.server:
-            self.server.start()        
-            print("Planner started, listening on " + self.port)
+            self.server.start()
+            print(f"Planner started, listening on {self.port}")
+            self.server.wait_for_termination()        
 
     def stop(self):
         if self.server:
@@ -24,8 +23,15 @@ class AresPlanner(ares_planner_pb2_grpc.AresPlannerGrpc):
             print("Planner successfully stopped.")
 
     def Plan(self, request, context):
-        print("I'm the default planning method!")
+        return self.DoPlanning(request, context)
         #Run Planning Service
 
+    def DoPlanning(request, context):
+        print("Received a planning request, but no override for plan logic is in place!")
+        print("To utilize custom planning logic, override the DoPlanning method of the AresPlanner class.")
+        print("Returning an empty plan response.")
+        return ares_planner_pb2.PlanResponse()
+
     def __del__(self):
-        self.stop() #Stop the gRPC server when the object is disposed
+        #Stop the gRPC server when the object is disposed
+        self.stop() 

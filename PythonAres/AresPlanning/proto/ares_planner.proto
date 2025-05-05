@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package AresPlanner;
+
 service AresPlannerGrpc {
 	rpc Plan (PlanRequest) returns (PlanResponse);
 }

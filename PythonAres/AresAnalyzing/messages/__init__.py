@@ -1,0 +1,2 @@
+from .print_analyzer_pb2 import PrintAnalysisResponse
+from .print_analyzer_pb2 import AnalyzePrint

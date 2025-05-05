@@ -5,7 +5,7 @@ import warnings
 
 from . import ares_planner_pb2 as ares__planner__pb2
 
-GRPC_GENERATED_VERSION = '1.70.0'
+GRPC_GENERATED_VERSION = '1.71.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -35,7 +35,7 @@ class AresPlannerGrpcStub(object):
             channel: A grpc.Channel.
         """
         self.Plan = channel.unary_unary(
-                '/AresPlannerGrpc/Plan',
+                '/AresPlanner.AresPlannerGrpc/Plan',
                 request_serializer=ares__planner__pb2.PlanRequest.SerializeToString,
                 response_deserializer=ares__planner__pb2.PlanResponse.FromString,
                 _registered_method=True)
@@ -60,9 +60,9 @@ def add_AresPlannerGrpcServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'AresPlannerGrpc', rpc_method_handlers)
+            'AresPlanner.AresPlannerGrpc', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('AresPlannerGrpc', rpc_method_handlers)
+    server.add_registered_method_handlers('AresPlanner.AresPlannerGrpc', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
@@ -83,7 +83,7 @@ class AresPlannerGrpc(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/AresPlannerGrpc/Plan',
+            '/AresPlanner.AresPlannerGrpc/Plan',
             ares__planner__pb2.PlanRequest.SerializeToString,
             ares__planner__pb2.PlanResponse.FromString,
             options,
