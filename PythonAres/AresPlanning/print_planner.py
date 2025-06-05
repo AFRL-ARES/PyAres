@@ -14,13 +14,13 @@ class AresPlanner(print_planner_pb2_grpc.PrintPlannerGrpc):
     def start(self):
         if self.server:
             self.server.start()
-            print(f"Planner started, listening on {self.port}")
+            print(f"Print planner started, listening on {self.port}")
             self.server.wait_for_termination()        
 
     def stop(self):
         if self.server:
             self.server.stop()
-            print("Planner successfully stopped.")
+            print("Print planner successfully stopped.")
 
     def Plan(self, request, context):
         #Can't override this method, as it's bound to the receival of our request.
@@ -29,7 +29,7 @@ class AresPlanner(print_planner_pb2_grpc.PrintPlannerGrpc):
         #Run Planning Service
 
     def DoPlanning(request, context):
-        print("Received a planning request, but no override for plan logic is in place!")
+        print("Received a print planning request, but no override for plan logic is in place!")
         print("To utilize custom planning logic, override the DoPlanning method of the AresPlanner class.")
         print("Returning an empty plan response.")
         return print_planner_pb2.PlanResponse()
