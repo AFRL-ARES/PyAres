@@ -1,0 +1,66 @@
+class PlanningParameter:
+    """
+    Represents a single parameter within a planning request.
+
+    Designed to provide a more user-friendly abstraction for the user to interact
+    with planning parameters through.
+    """
+    def __init__(self, name: str, value: float, 
+                 minimum_value: float, maxiumum_value: 
+                 float, param_history: list[float], data_type: str, 
+                 is_planned: bool, is_result: bool, planner_name: str):
+        """
+        Initializes a PlanningParameter.
+
+        Args:
+            name: The name or key associated with the parameter.
+            value: The value of the parameter.
+            minimum_value: The minimum value the parameter is capable of being assigned.
+            maximum_value: The maximum value the parameter is capable of being assigned.
+            param_history: A list of historical values associated with the parameter.
+            data_type: The data type associated with the parameter.
+            is_planned: A bool representing whether this parameter is designed to be planned for.
+            is_result: A bool representing whether this parameter is the intended result of the experiment.
+            planner_name: The name of the planner ARES requested be used to plan for this parameter.
+        """
+        self.name = name
+        self.value = value
+        self.minimum_value = minimum_value
+        self.maxiumum_value = maxiumum_value
+        self.param_history = param_history
+        self.data_type = data_type
+        self.is_planned = is_planned
+        self.is_result = is_result
+        self.planner_name = planner_name
+
+class PlanRequest:
+    """
+    Represents a PlanRequest message received from ARES.
+
+    Designed to provide a more user-friendly abstraction for interacting with a plan request message.
+    """
+    def __init__(self, parameters: list[PlanningParameter]):
+        """
+        Initializes a PlanRequest.
+
+        Args:
+            parameters: A list of PlanningParameter objects.
+        """
+        self.parameters = parameters
+
+class PlanResponse:
+    """
+    Represents a PlanResponse message to be send to ARES.
+
+    Designed to provide a more user-friendly abstraction for interacting with a plan response message.
+    """
+    def __init__(self, parameter_names: list[str], parameter_values: list[float]):
+        """
+        Initializes a PlanResponse.
+
+        Args:
+            parameter_names: A list of names associated with planned parameters.
+            parameter_values: A List of values associated with planned parameters. 
+        """
+        self.parameter_names = parameter_names
+        self.parameter_values = parameter_values

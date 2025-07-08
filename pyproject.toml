@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "PythonAres"
-version = "1.0.0"
+name = "PyAres"
+version = "1.0.3"
 authors = [ { name = "AFRL", email = "AFRL.RX.AREScontact@us.af.mil" }, ]
 description = "The official Python libray for ARES."
 license = "MIT"
@@ -17,3 +17,6 @@ dependencies = [
 
 [project.urls]
 "Homepage" = "https://github.com/AFRL-ARES"
+
+[tool.setuptools.packages]
+find = {}
