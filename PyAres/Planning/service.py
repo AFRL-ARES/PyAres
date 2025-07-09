@@ -34,7 +34,7 @@ class AresPlannerServiceWrapper(ares_planner_pb2_grpc.AresPlannerGrpcServicer):
         self._service_settings.append(new_setting)
 
     def RequestCapabilities(self, request, context) -> ares_planner_pb2.Capabilities:
-        print("Capapbilities Requested!")
+        print("Capabilities Requested!")
         """
         Implements the gRPC Capabilities request method. Responsible for telling ARES what this planner
         service is capable of.
@@ -76,8 +76,16 @@ class AresPlannerServiceWrapper(ares_planner_pb2_grpc.AresPlannerGrpcServicer):
             #Handle errors from user's logic
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error in custom planning logic: {e}")
+        
+        response_proto = ares_planner_pb2.PlanResponse()
+        
+        for value in python_response.parameter_values:
+            response_proto.parameter_values.append(value)
 
-        response_proto = ares_planner_pb2,PlanResponse(parameter_names=python_response.parameter_names, parameter_values=python_response.parameter_values)
+        for name in python_response.parameter_names:
+            response_proto.parameter_names.append(name)
+
+        print("Sending Plan Response.....")
         return response_proto
     
 class AresPlannerService:

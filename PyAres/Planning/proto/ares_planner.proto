@@ -47,7 +47,7 @@ message PlanRequest {
 
 message PlanResponse {
   repeated string parameter_names = 1;
-  repeated double parameter_values = 2;
+  repeated float parameter_values = 2;
 }
 
 message PlanningParameter {
