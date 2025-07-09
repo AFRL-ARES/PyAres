@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PyAres"
-version = "1.0.3"
+version = "1.0.7"
 authors = [ { name = "AFRL", email = "AFRL.RX.AREScontact@us.af.mil" }, ]
 description = "The official Python libray for ARES."
 license = "MIT"
