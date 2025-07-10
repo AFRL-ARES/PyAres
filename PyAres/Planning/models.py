@@ -60,7 +60,7 @@ class PlanResponse:
 
         Args:
             parameter_names: A list of names associated with planned parameters.
-            parameter_values: A List of values associated with planned parameters. 
+            parameter_values: A list of values associated with planned parameters. 
         """
         self.parameter_names = parameter_names
         self.parameter_values = parameter_values

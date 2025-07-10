@@ -19,6 +19,7 @@ class AresPlannerServiceWrapper(ares_planner_pb2_grpc.AresPlannerGrpcServicer):
     def __init__(self, service_name: str, custom_plan_logic: PlanLogicFunction):
         self._custom_plan_logic = custom_plan_logic
         self._service_name = service_name
+        self._timeout = 30
 
         #Storage of planners and settings
         self._hosted_planners = []
@@ -33,13 +34,16 @@ class AresPlannerServiceWrapper(ares_planner_pb2_grpc.AresPlannerGrpcServicer):
         new_setting = SetValueOfSetting(new_setting, setting_value)
         self._service_settings.append(new_setting)
 
+    def SetTimeout(self, new_timeout: int):
+        self._timeout = new_timeout
+
     def RequestCapabilities(self, request, context) -> ares_planner_pb2.Capabilities:
         print("Capabilities Requested!")
         """
         Implements the gRPC Capabilities request method. Responsible for telling ARES what this planner
         service is capable of.
         """
-        response = ares_planner_pb2.Capabilities(service_name=self._service_name, available_planners=self._hosted_planners, adapter_settings=self._service_settings)
+        response = ares_planner_pb2.Capabilities(service_name=self._service_name, timeout_seconds=self._timeout, available_planners=self._hosted_planners, adapter_settings=self._service_settings)
         return response
     
     def Plan(self, request: ares_planner_pb2.PlanRequest, context) -> ares_planner_pb2.PlanResponse:
@@ -92,7 +96,7 @@ class AresPlannerService:
     """
     Manages the gRPC server for the AresPlannerService
     """
-    def __init__(self, custom_plan_logic: PlanLogicFunction, service_name: str, service_description: str, service_version: str, port: int = 7082):
+    def __init__(self, custom_plan_logic: PlanLogicFunction, service_name: str, service_description: str, service_version: str, use_localhost: bool = True, port: int = 7082):
         """
         Initializes the AresPlannerService
 
@@ -115,7 +119,10 @@ class AresPlannerService:
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         self._service_wrapper = AresPlannerServiceWrapper(service_name, custom_plan_logic)
         ares_planner_pb2_grpc.add_AresPlannerGrpcServicer_to_server(self._service_wrapper, self._server)
-        self._server.add_insecure_port(f'localhost:{self._port}')
+        if(use_localhost):
+            self._server.add_insecure_port(f'localhost:{self._port}')
+        else:
+            self._server.add_insecure_port(f'[::]:{self._port}')
 
     def AddPlannerOption(self, planner_name: str, planner_description: str, planner_version: str):
         """
@@ -141,6 +148,15 @@ class AresPlannerService:
         """
         self._service_wrapper.AddPlannerSetting(setting_name, setting_value)
         print(f"Successfully added new setting {setting_name}")
+
+    def SetTimeout(self, new_timeout: int):
+        """
+        Sets the time, in seconds, that ARES will wait to receive a response from this service.
+
+        Args:
+            new_timeout: The time to be assigned as the new timeout value
+        """
+        self._service_wrapper.SetTimeout(new_timeout)
 
     def start(self):
         """
