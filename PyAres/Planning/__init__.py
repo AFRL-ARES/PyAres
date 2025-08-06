@@ -1,5 +1,5 @@
 from .models import PlanningParameter, PlanRequest, PlanResponse
-from .service import AresPlannerService
+from .planning_service import AresPlannerService
 from .print_planner import PrintPlanner
 from .print_planner import print_planner_pb2
 from .print_planner import print_planner_pb2_grpc
