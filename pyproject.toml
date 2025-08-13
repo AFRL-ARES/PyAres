@@ -12,7 +12,8 @@ requires-python = ">= 3.9"
 
 dependencies = [  
     "grpcio-tools (>=1.71.0,<2.0.0)",
-    "grpcio (>=1.71.0,<2.0.0)"
+    "grpcio (>=1.71.0,<2.0.0)",
+    "ares-datamodel (>=0.7.0b5)"
 ]
 
 [project.urls]
