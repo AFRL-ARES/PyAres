@@ -2,9 +2,12 @@
 requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["PyAres*"]
+
 [project]
 name = "PyAres"
-version = "1.0.17"
+version = "0.0.18"
 authors = [ { name = "AFRL", email = "AFRL.RX.AREScontact@us.af.mil" }, ]
 description = "The official Python libray for ARES."
 license = "MIT"
@@ -13,11 +16,8 @@ requires-python = ">= 3.9"
 dependencies = [  
     "grpcio-tools (>=1.71.0,<2.0.0)",
     "grpcio (>=1.71.0,<2.0.0)",
-    "ares-datamodel (>=0.7.0b5)"
+    "ares-datamodel (>=0.7.1b1)"
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/AFRL-ARES"
-
-[tool.setuptools.packages]
-find = {}

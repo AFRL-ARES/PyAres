@@ -14,7 +14,7 @@ PlanLogicFunction = Callable[[PlanRequest], Union[PlanResponse, Awaitable[PlanRe
 
 class AresPlannerServiceWrapper(ares_planner_pb2_grpc.AresPlannerGrpcServicer):
     """
-    A wrapper around the gRPC service to expose native Python objects
+    A wrapper around the gRPC service to expose native Python objects for planning
     """
     def __init__(self, service_name: str, custom_plan_logic: PlanLogicFunction):
         self._custom_plan_logic = custom_plan_logic

@@ -1,0 +1,12 @@
+from enum import Enum
+
+class AresDataType(Enum):
+    UNKNOWN = 0
+    NULL = 1
+    BOOLEAN = 2
+    STRING = 3
+    NUMBER = 4
+    STRING_ARRAY = 5
+    NUMBER_ARRAY = 6
+    BYTE_ARRAY = 7
+    BOOL_ARRAY = 8
