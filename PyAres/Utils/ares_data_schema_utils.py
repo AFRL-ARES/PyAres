@@ -2,6 +2,7 @@ from typing import Union
 
 #Datamodel Imports
 from ares_datamodel import ares_data_schema_pb2
+from ares_datamodel import ares_struct_pb2
 
 from ..Models import ares_data_models
 def ares_schema_to_dict(schema: ares_data_schema_pb2.AresDataSchemaSimplified) -> dict:
@@ -33,10 +34,12 @@ def create_settings_schema_entry(
             schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional)
 
         elif(all(isinstance(item, str) for item in choices)):
-            schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional, string_choices=choices)
+            schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional)
+            schema_entry.string_choices.strings.extend(choices)
     
         elif(all(isinstance(item, (int, float)) for item in choices)):
-            schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional, number_choices=choices)
+            schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional)
+            schema_entry.number_choices.numbers.extend(choices)
 
     return schema_entry
 

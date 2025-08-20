@@ -1,11 +1,11 @@
-#Generic Imports
+# Standard Imports
 import grpc
 from concurrent import futures
 from typing import Callable, Awaitable, Union, Mapping, Dict
 
 # Import generated protobuf and gRPC stubs
-from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2
-from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2_grpc
+from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2 as analyzer_service
+from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2_grpc as analyzer_service_grpc
 from ares_datamodel.analyzing import analysis_pb2
 from ares_datamodel.analyzing import analyzer_capabilities_pb2
 from ares_datamodel import ares_data_type_pb2
@@ -20,11 +20,10 @@ from ..Utils import ares_data_schema_utils
 from ..Models import ares_data_models
 from .analyzer_models import AnalysisRequest, Analysis, InfoResponse
 
-
 # Type hints for the user's custom logic
 AnalyzeLogicFunction = Callable[[AnalysisRequest], Union[Analysis, Awaitable[Analysis]]]
 
-class AresAnalyzerServiceWrapper(ares_remote_analyzer_service_pb2_grpc.AresRemoteAnalyzerServiceServicer):
+class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerServiceServicer):
     """
     A wrapper around the gRPC service to expose native Python objects for analysis.
     For internal ARES development use, realistically should never be exposed to the general user.
@@ -36,14 +35,10 @@ class AresAnalyzerServiceWrapper(ares_remote_analyzer_service_pb2_grpc.AresRemot
         self._settings: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
         self._analysis_parameters: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
 
-    def GetAnalyzerCapabilities(self, request, context) -> analyzer_capabilities_pb2.AnalyzerCapabilities:
-        print("Capabilities Requested!")
-        return analyzer_capabilities_pb2.AnalyzerCapabilities(timeout_seconds=self._timeout, settings_schema=self._settings)
-
-    def GetInfo(self, request, context) -> ares_remote_analyzer_service_pb2.InfoResponse:
+    def GetInfo(self, request, context) -> analyzer_service.InfoResponse:
         print("Info Requested!")
         try:
-            response = ares_remote_analyzer_service_pb2.InfoResponse(
+            response = analyzer_service.InfoResponse(
             name=self._info.name,
             version=self._info.version,
             description=self._info.description)
@@ -54,7 +49,7 @@ class AresAnalyzerServiceWrapper(ares_remote_analyzer_service_pb2_grpc.AresRemot
             print(f"Exception while trying to respond to ARES with information! {e}")
 
 
-    def Analyze(self, request: ares_remote_analyzer_service_pb2.AnalysisRequest, context) -> analysis_pb2.Analysis:
+    def Analyze(self, request: analyzer_service.AnalysisRequest, context) -> analysis_pb2.Analysis:
         print("Received an analysis request!")
         try:
             python_request = AnalysisRequest(
@@ -78,9 +73,9 @@ class AresAnalyzerServiceWrapper(ares_remote_analyzer_service_pb2_grpc.AresRemot
             context.set_details(f"Error in custom analysis logic: {e}")
             return analysis_pb2.Analysis(success=False, error_string=str(e))
         
-    def GetState(self, request, context) -> ares_remote_analyzer_service_pb2.AnalyzerStateResponse:
+    def GetState(self, request, context) -> analyzer_service.AnalyzerStateResponse:
         try:
-            analyzer_state = ares_remote_analyzer_service_pb2.AnalyzerStateResponse(state=analyzer_state_pb2.AnalyzerState.ACTIVE)
+            analyzer_state = analyzer_service.AnalyzerStateResponse(state=analyzer_state_pb2.AnalyzerState.ACTIVE)
             return analyzer_state
         
         except Exception as e:
@@ -90,7 +85,7 @@ class AresAnalyzerServiceWrapper(ares_remote_analyzer_service_pb2_grpc.AresRemot
     def GetAnalysisParameters(self, request, context):
         print("Analysis Parameters Requested")
         try:
-            analysisParamResponse = ares_remote_analyzer_service_pb2.AnalysisParametersResponse()
+            analysisParamResponse = analyzer_service.AnalysisParametersResponse()
 
             for key, value in self._analysis_parameters.items():
                 map_entry = analysisParamResponse.parameter_schema.fields[key]
@@ -108,16 +103,37 @@ class AresAnalyzerServiceWrapper(ares_remote_analyzer_service_pb2_grpc.AresRemot
         except Exception as e:
             print(f"Exception while trying to respond to ARES with analysis parameters! {e}")
 
+    def GetAnalyzerCapabilities(self, request, context) -> analyzer_capabilities_pb2.AnalyzerCapabilities:
+        print("Capabilities Requested!")
+        try:
+            capabilities = analyzer_capabilities_pb2.AnalyzerCapabilities(timeout_seconds=self._timeout)
+
+            for(key, value) in self._settings.items():
+                settings_entry = capabilities.settings_schema.fields[key]
+                settings_entry.type = value.type
+                settings_entry.optional = value.optional
+
+                if len(value.string_choices.strings) != 0:
+                    settings_entry.string_choices.strings.extend(value.string_choices.strings)
+
+                elif len(value.number_choices.numbers) != 0:
+                    settings_entry.number_choices.numbers.extend(value.number_choices.numbers)
+            
+            return capabilities
+
+        except Exception as e:
+            print(f"Exception while trying to respond to ARES capabilities request! {e}") 
+
     def GetConnectionStatus(self, request, context):
         try:
-            ares_remote_analyzer_service_pb2.ConnectionStatusResponse(status=ares_remote_analyzer_service_pb2.ConnectionStatus.CONNECTED)
+            analyzer_service.ConnectionStatusResponse(status=analyzer_service.ConnectionStatus.CONNECTED)
 
         except Exception as e:
             print(f"Exception while trying to respond to ARES with connection status! {e}")
 
-    def ValidateInputs(self, request: ares_remote_analyzer_service_pb2.ParameterValidationRequest, context): 
+    def ValidateInputs(self, request: analyzer_service.ParameterValidationRequest, context): 
         print("Validating Inputs")
-        response = ares_remote_analyzer_service_pb2.ParameterValidationResult(success=True)
+        response = analyzer_service.ParameterValidationResult(success=True)
         provided_params: Mapping[str, ares_data_type_pb2.AresDataType] = request.input_schema.fields
 
         for stored_key, stored_schema in self._analysis_parameters.items():
@@ -170,16 +186,18 @@ class AresAnalyzerService:
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         self._service_wrapper = AresAnalyzerServiceWrapper(info=self.info, timeout=timeout, custom_analysis_logic=custom_analysis_logic)
         #self._service_wrapper.SetCapabilities(self._capabilities)
-        ares_remote_analyzer_service_pb2_grpc.add_AresRemoteAnalyzerServiceServicer_to_server(self._service_wrapper, self._server)
+        analyzer_service_grpc.add_AresRemoteAnalyzerServiceServicer_to_server(self._service_wrapper, self._server)
 
         if use_localhost:
             self._server.add_insecure_port(f'localhost:{self._port}')
         else:
             self._server.add_insecure_port(f'[::]:{self._port}')
 
-    def AddSetting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = []):
+    def add_setting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = []):
         """
         Adds an analyzer setting to be reported to ARES when capabilities are requested.
+        While most `PyAres.Models.AresDataType` options are supported, bool arrays and byte arrays
+        cannot be used as the type for your setting values.
 
         Args:
             setting_name (str): The name of the setting.
@@ -188,9 +206,8 @@ class AresAnalyzerService:
             constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
         """
         self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints)
-        print(f"Successfully added new setting {setting_name}")
 
-    def AddAnalysisParameter(self, parameter_name: str, parameter_type: ares_data_models.AresDataType, optional: bool = False):
+    def add_analysis_parameter(self, parameter_name: str, parameter_type: ares_data_models.AresDataType, optional: bool = False):
         """
         Adds an analysis parameter that will be reported to ARES. Analysis parameters are inputs your analyzer accepts from ARES, and will be mapped to command outputs
         in experiment scripts.
@@ -202,7 +219,7 @@ class AresAnalyzerService:
         """
         self._service_wrapper._analysis_parameters[parameter_name] = ares_data_schema_utils.create_settings_schema_entry(parameter_type, optional, [])
 
-    def SetTimeout(self, new_timeout: int):
+    def set_timeout(self, new_timeout: int):
         """
         Sets the time, in seconds, that ARES will wait to receive a response from this service.
 

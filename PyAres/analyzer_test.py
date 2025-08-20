@@ -26,10 +26,19 @@ if __name__ == "__main__":
     pythonDemoAnalyzer = AresAnalyzerService(Analyze, name, version, description)
 
     #Add Analysis Parameters
-    pythonDemoAnalyzer.AddAnalysisParameter("Growth", AresDataType.NUMBER)
-    pythonDemoAnalyzer.AddAnalysisParameter("Temperature", AresDataType.NUMBER)
+    pythonDemoAnalyzer.add_analysis_parameter("Growth", AresDataType.NUMBER)
+    pythonDemoAnalyzer.add_analysis_parameter("Temperature", AresDataType.NUMBER)
+
+    #Add Settings
+    pythonDemoAnalyzer.add_setting("String Setting", AresDataType.STRING)
+    pythonDemoAnalyzer.add_setting("Number Setting", AresDataType.NUMBER)
+    pythonDemoAnalyzer.add_setting("Boolean Setting", AresDataType.BOOLEAN)
+    pythonDemoAnalyzer.add_setting("String Array Setting", AresDataType.STRING_ARRAY)
+    pythonDemoAnalyzer.add_setting("Number Array Setting", AresDataType.NUMBER_ARRAY)
+    pythonDemoAnalyzer.add_setting("Constrained Strings", AresDataType.STRING_ARRAY, True, ["One", "Two", "Three"])
+    pythonDemoAnalyzer.add_setting("Constrained Numbers", AresDataType.NUMBER_ARRAY, True, [1, 2, 3])
 
     #Set Analyzer Timeout
-    pythonDemoAnalyzer.SetTimeout(60)
+    pythonDemoAnalyzer.set_timeout(60)
 
     pythonDemoAnalyzer.start()
