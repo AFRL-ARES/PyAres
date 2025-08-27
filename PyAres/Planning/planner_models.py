@@ -1,3 +1,5 @@
+from typing import Dict
+
 class PlanningParameter:
     """
     Represents a single parameter within a planning request.
@@ -5,9 +7,8 @@ class PlanningParameter:
     Designed to provide a more user-friendly abstraction for the user to interact
     with planning parameters through.
     """
-    def __init__(self, name: str, value: float, 
-                 minimum_value: float, maxiumum_value: 
-                 float, param_history: list[float], data_type: str, 
+    def __init__(self, name: str, minimum_value: float, 
+                 maxiumum_value: float, param_history: list, data_type: str, 
                  is_planned: bool, is_result: bool, planner_name: str):
         """
         Initializes a PlanningParameter.
@@ -24,7 +25,6 @@ class PlanningParameter:
             planner_name: The name of the planner ARES requested be used to plan for this parameter.
         """
         self.name = name
-        self.value = value
         self.minimum_value = minimum_value
         self.maxiumum_value = maxiumum_value
         self.param_history = param_history
@@ -39,7 +39,7 @@ class PlanRequest:
 
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
-    def __init__(self, parameters: list[PlanningParameter]):
+    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, any]):
         """
         Initializes a PlanRequest.
 
@@ -47,14 +47,11 @@ class PlanRequest:
             parameters: A list of PlanningParameter objects.
         """
         self.parameters = parameters
+        self.settings = settings
 
 class PlanResponse:
-    """
-    Represents a PlanResponse message to be send to ARES.
-
-    Designed to provide a more user-friendly abstraction for interacting with a plan response message.
-    """
-    def __init__(self, parameter_names: list[str], parameter_values: list[float]):
+    """ Represents a PlanResponse message to be send to ARES. """
+    def __init__(self, parameter_names: list[str], parameter_values: list):
         """
         Initializes a PlanResponse.
 

@@ -1,52 +1,100 @@
 import grpc
 from concurrent import futures
-from typing import Callable, Awaitable, Union
+from typing import Callable, Awaitable, Union, Dict
 
-# Import generated protobuf and gRPC stubs
-from .messages import ares_planner_pb2
-from .messages import ares_planner_pb2_grpc
+from ares_datamodel.planning.remote import ares_remote_planner_service_pb2 as planner_service
+from ares_datamodel.planning.remote import ares_remote_planner_service_pb2_grpc as planner_service_grpc
+from ares_datamodel.planning import planner_pb2
+from ares_datamodel.planning import planner_settings_pb2
+from ares_datamodel.planning import planner_service_capabilities_pb2
+from ares_datamodel.planning import plan_pb2
+from ares_datamodel import ares_data_schema_pb2
+from ares_datamodel.connection import connection_state_pb2
+from ares_datamodel.connection import connection_info_pb2
 
-from .models import PlanningParameter, PlanRequest, PlanResponse
+# Import Utilities
+from ..Utils import ares_value_utils
+from ..Utils import ares_data_schema_utils
+from ..Utils import ares_data_type_utils
+from ..Utils import ares_struct_utils
 
-#Type hint for the user's custom planning logic
-#Receives a PlanRequest and returns a PlanResponse
+# Import python models
+from ..Models import ares_data_models
+from .planner_models import *
+
+# Type hint for the user's custom planning logic
 PlanLogicFunction = Callable[[PlanRequest], Union[PlanResponse, Awaitable[PlanResponse]]]
 
-class AresPlannerServiceWrapper(ares_planner_pb2_grpc.AresPlannerGrpcServicer):
+class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceServicer):
     """
     A wrapper around the gRPC service to expose native Python objects for planning
     """
-    def __init__(self, service_name: str, custom_plan_logic: PlanLogicFunction):
+    def __init__(self, service_name: str, description: str, version: str, timeout: int, custom_plan_logic: PlanLogicFunction):
         self._custom_plan_logic = custom_plan_logic
         self._service_name = service_name
-        self._timeout = 30
+        self._description = description
+        self._version = version
+        self._settings: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
+        self._planner_options: list[planner_pb2.Planner] = []
+        self._supported_types: list[ares_data_models.AresDataType] = []
+        self._timeout = timeout
 
-        #Storage of planners and settings
-        self._hosted_planners = []
-        self._service_settings = []
-
-    def AddPlannerOption(self, planner_name: str, planner_description: str, planner_version: str):
-        new_planner = ares_planner_pb2.Planner(planner_name=planner_name, description=planner_description, version=planner_version)
-        self._hosted_planners.append(new_planner)
-
-    def AddPlannerSetting(self, setting_name: str, setting_value):
-        new_setting = ares_planner_pb2.PlannerSetting(setting_name=setting_name)
-        new_setting = SetValueOfSetting(new_setting, setting_value)
-        self._service_settings.append(new_setting)
-
-    def SetTimeout(self, new_timeout: int):
-        self._timeout = new_timeout
-
-    def RequestCapabilities(self, request, context) -> ares_planner_pb2.Capabilities:
+    def GetPlannerServiceCapabilities(self, request, context) -> planner_service_capabilities_pb2.PlannerServiceCapabilities:
         print("Capabilities Requested!")
         """
         Implements the gRPC Capabilities request method. Responsible for telling ARES what this planner
         service is capable of.
         """
-        response = ares_planner_pb2.Capabilities(service_name=self._service_name, timeout_seconds=self._timeout, available_planners=self._hosted_planners, adapter_settings=self._service_settings)
-        return response
+        capabilities = planner_service_capabilities_pb2.PlannerServiceCapabilities(timeout_seconds=self._timeout)
+        capabilities.service_name = self._service_name
+        capabilities.accepted_types.extend(self._supported_types)
+        capabilities.available_planners.extend(self._planner_options)
+
+        for(key, value) in self._settings.items():
+            settings_entry = capabilities.settings_schema.fields[key]
+            settings_entry.type = value.type
+            settings_entry.optional - value.optional
+
+            if len(value.string_choices.strings) != 0:
+                settings_entry.string_choices.strings.extend(value.string_choices.strings)
+
+            elif len(value.number_choices.numbers) != 0:
+                settings_entry.number_choices.numbers.extend(value.number_choices.numbers)
+
+        print("Capabilites Sent!")
+        return capabilities
     
-    def Plan(self, request: ares_planner_pb2.PlanRequest, context) -> ares_planner_pb2.PlanResponse:
+    def GetInfo(self, request, context) -> connection_info_pb2.InfoResponse:
+        try:
+            response = connection_info_pb2.InfoResponse(
+                name=self._service_name,
+                version=self._version,
+                description=self._description
+            )
+
+            return response
+        
+        except Exception as e:
+            print(f"Exception while trying to respond to ARES with information! {e}")
+    
+    def GetState(self, request, context) -> connection_state_pb2.StateResponse:
+        try:
+            planner_state = connection_state_pb2.StateResponse(state=connection_state_pb2.State.ACTIVE, state_message=f"{self._service_name} is active!")
+            return planner_state
+        
+        except Exception as e:
+            print(f"Exception while trying to respond to ARES with state! {e}")
+
+    
+    def GetConnectionStatus(self, request, context):
+        try:
+            connection_state_pb2.StateResponse(status=connection_state_pb2.State.ACTIVE, state_message=f"{self._service_name} is active!")
+
+        except Exception as e:
+            print(f"Exception while trying to respond to ARES with connection status! {e}")
+
+    
+    def Plan(self, request: plan_pb2.PlanningRequest, context) -> plan_pb2.PlanningResponse:
         """
         Implements the gRPC Plan method. This method converts protobuf requests to native Python objects
         before executing the users custom planning logic and converting their response back to protobuf.
@@ -58,17 +106,16 @@ class AresPlannerServiceWrapper(ares_planner_pb2_grpc.AresPlannerGrpcServicer):
                 PlanningParameter
                 (
                     name=proto_param.parameter_name,
-                    value=proto_param.parameter_value,
                     maxiumum_value=proto_param.maximum_value,
                     minimum_value=proto_param.minimum_value,
-                    param_history=proto_param.parameter_history,
-                    data_type=proto_param.data_type,
+                    param_history=[ares_value_utils.ares_value_to_py(val) for val in proto_param.parameter_history],
+                    data_type=ares_data_type_utils.proto_ares_type_to_python_ares_type(proto_param.data_type),
                     is_planned=proto_param.is_planned,
                     is_result=proto_param.is_result,
                     planner_name=proto_param.planner_name
                 ))
         
-        python_request = PlanRequest(parameters=parameters)
+        python_request = PlanRequest(parameters=parameters, settings=ares_struct_utils.ares_struct_to_dict(request.adapter_settings))
         
         #Handle call using the user's custom planning logic 
         try:
@@ -81,13 +128,13 @@ class AresPlannerServiceWrapper(ares_planner_pb2_grpc.AresPlannerGrpcServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error in custom planning logic: {e}")
         
-        response_proto = ares_planner_pb2.PlanResponse()
-        
-        for value in python_response.parameter_values:
-            response_proto.parameter_values.append(value)
+        response_proto = plan_pb2.PlanningResponse()
 
-        for name in python_response.parameter_names:
-            response_proto.parameter_names.append(name)
+        for i in range(len(python_response.parameter_names)):
+            planned_parameter = plan_pb2.PlannedParameter(parameter_value=ares_value_utils.create_ares_value(python_response.parameter_values[i]))
+            planned_parameter.parameter_name = python_response.parameter_names[i]
+            new_planned_parameter = response_proto.planned_parameters.add()
+            new_planned_parameter.CopyFrom(planned_parameter)
 
         print("Sending Plan Response.....")
         return response_proto
@@ -96,7 +143,7 @@ class AresPlannerService:
     """
     Manages the gRPC server for the AresPlannerService
     """
-    def __init__(self, custom_plan_logic: PlanLogicFunction, service_name: str, service_description: str, service_version: str, use_localhost: bool = True, port: int = 7082):
+    def __init__(self, custom_plan_logic: PlanLogicFunction, service_name: str, service_description: str, service_version: str, timeout: int = 30, use_localhost: bool = True, port: int = 7082):
         """
         Initializes the AresPlannerService
 
@@ -107,6 +154,7 @@ class AresPlannerService:
             service_name: The name descriptor that is associated with your planner service.
             service_description: A brief description describing your implementation of the planner service.
             service_version: The version of your planner service.
+            use_localhost: An optional value that allows the user to specify whether to host the service on the local network. Defaults to True.
             port: The port that your planner service will serve on. Defaults to port 7082.
         """
         #Public Values, designed to be accessible to the user
@@ -117,46 +165,53 @@ class AresPlannerService:
         #Private values, mostly related to the service
         self._port = port
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-        self._service_wrapper = AresPlannerServiceWrapper(service_name, custom_plan_logic)
-        ares_planner_pb2_grpc.add_AresPlannerGrpcServicer_to_server(self._service_wrapper, self._server)
+        self._service_wrapper = AresPlannerServiceWrapper(service_name, service_description, service_version, timeout, custom_plan_logic)
+        planner_service_grpc.add_AresRemotePlannerServiceServicer_to_server(self._service_wrapper, self._server)
         if(use_localhost):
             self._server.add_insecure_port(f'localhost:{self._port}')
         else:
             self._server.add_insecure_port(f'[::]:{self._port}')
 
-    def AddPlannerOption(self, planner_name: str, planner_description: str, planner_version: str):
+    def add_planner_option(self, planner_name: str, planner_description: str, planner_version: str):
         """
         Adds a planner option that is reported to ARES when your services capabilities are requested.
 
         Args:
-            planner_name: The dedicated name of your planner. ARES will use this to identify which
-                planning method within your service was selected for use.
-            planner_description: A brief description of your planner that is displayed in ARES.
-            planner_version: The version of your planner. 
+            planner_name (str): The dedicated name of your planner.
+            planner_description (str): A brief description of your planner that is displayed in ARES.
+            planner_version (str): The version of your planner. 
         """
-        self._service_wrapper.AddPlannerOption(planner_name, planner_description, planner_version)
-        print(f"Successfully added {planner_name} as a planner option!")
+        self._service_wrapper._planner_options.append(planner_pb2.Planner(planner_name=planner_name, description=planner_description, version=planner_version))
 
-    def AddPlannerSetting(self, setting_name: str, setting_value):
+    def add_setting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = []):
         """
         Adds a planner setting to be reported to ARES when your services capabilities are requested.
 
         Args:
-            setting_name: The name descriptor of your setting.
-            setting_value: The value associated with your setting, also tells ARES what the type of your
-                setting value is.
+            setting_name (str): The name of the setting.
+            setting_type (AresDataType): The type of this settings value.
+            optional (bool): Whether the setting is optional.
+            constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
         """
-        self._service_wrapper.AddPlannerSetting(setting_name, setting_value)
-        print(f"Successfully added new setting {setting_name}")
+        self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints)
 
-    def SetTimeout(self, new_timeout: int):
+    def add_supported_type(self, type: ares_data_models.AresDataType):
+        """
+        Adds the specified type to the list of value types your planenr service accepts.
+
+        Args:
+            type (AresDataType): The type being added to the list of allowed types.
+        """
+        self._service_wrapper._supported_types.append(ares_data_type_utils.python_ares_type_to_proto_ares_type(type))
+
+    def set_timeout(self, new_timeout: int):
         """
         Sets the time, in seconds, that ARES will wait to receive a response from this service.
 
         Args:
             new_timeout: The time to be assigned as the new timeout value
         """
-        self._service_wrapper.SetTimeout(new_timeout)
+        self._service_wrapper._timeout = new_timeout
 
     def start(self):
         """
@@ -171,16 +226,4 @@ class AresPlannerService:
         Stops the service, terminating the connection.
         """
         print("Stopping Ares Planning Service...")
-        self._server.stop(0).wait()
-
-def SetValueOfSetting(setting: ares_planner_pb2.PlannerSetting, setting_value) -> ares_planner_pb2.PlannerSetting: 
-    if(isinstance(setting_value, str)):
-        setting.setting_value.string_value = setting_value
-    
-    elif(isinstance(setting_value, float)):
-        setting.setting_value.float_value = setting_value
-    
-    elif(isinstance(setting_value, bool)):
-        setting.setting_value.bool_value = setting_value
-
-    return setting
+        self._server.stop(0).wait()       

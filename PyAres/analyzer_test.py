@@ -3,12 +3,17 @@ from PyAres import AnalysisRequest
 from PyAres import Analysis
 from PyAres import AresDataType
 
-def Analyze(request: AnalysisRequest) -> Analysis:
+def analyze(request: AnalysisRequest) -> Analysis:
     print("Analysis Requested!")
     
     #PyARES should ensure all your required inputs are here, but use .get to follow best practice
     growth = request.inputs.get("Growth")
     temperature = request.inputs.get("Temperature")
+
+    #PyARES will also provide your settings in much the same way
+    string_setting = request.settings.get("String Setting")
+    number_setting = request.settings.get("Number Setting")
+    boolean_setting = request.settings.get("Boolean Setting")
 
     print(f"Growth: {growth}")
     print(f"Temperature: {temperature}")
@@ -23,7 +28,7 @@ if __name__ == "__main__":
     name = "Python Test Analyzer"
     version = "0.0.1"
     description = "This is a test analyzer to demonstrate working with PyAres to create analyzers!"
-    pythonDemoAnalyzer = AresAnalyzerService(Analyze, name, version, description)
+    pythonDemoAnalyzer = AresAnalyzerService(analyze, name, version, description)
 
     #Add Analysis Parameters
     pythonDemoAnalyzer.add_analysis_parameter("Growth", AresDataType.NUMBER)

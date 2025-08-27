@@ -8,8 +8,9 @@ from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2 as 
 from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2_grpc as analyzer_service_grpc
 from ares_datamodel.analyzing import analysis_pb2
 from ares_datamodel.analyzing import analyzer_capabilities_pb2
+from ares_datamodel.connection import connection_state_pb2
+from ares_datamodel.connection import connection_info_pb2
 from ares_datamodel import ares_data_type_pb2
-from ares_datamodel.analyzing import analyzer_state_pb2
 from ares_datamodel import ares_data_schema_pb2
 
 # Import Utilities
@@ -35,10 +36,10 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
         self._settings: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
         self._analysis_parameters: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
 
-    def GetInfo(self, request, context) -> analyzer_service.InfoResponse:
+    def GetInfo(self, request, context) -> connection_info_pb2.InfoResponse:
         print("Info Requested!")
         try:
-            response = analyzer_service.InfoResponse(
+            response = connection_info_pb2.InfoResponse(
             name=self._info.name,
             version=self._info.version,
             description=self._info.description)
@@ -73,9 +74,9 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             context.set_details(f"Error in custom analysis logic: {e}")
             return analysis_pb2.Analysis(success=False, error_string=str(e))
         
-    def GetState(self, request, context) -> analyzer_service.AnalyzerStateResponse:
+    def GetState(self, request, context) -> connection_state_pb2.StateResponse:
         try:
-            analyzer_state = analyzer_service.AnalyzerStateResponse(state=analyzer_state_pb2.AnalyzerState.ACTIVE)
+            analyzer_state = connection_state_pb2.StateResponse(state=connection_state_pb2.State.ACTIVE)
             return analyzer_state
         
         except Exception as e:
@@ -126,7 +127,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
 
     def GetConnectionStatus(self, request, context):
         try:
-            analyzer_service.ConnectionStatusResponse(status=analyzer_service.ConnectionStatus.CONNECTED)
+            connection_state_pb2.StateResponse(status=connection_state_pb2.State.ACTIVE)
 
         except Exception as e:
             print(f"Exception while trying to respond to ARES with connection status! {e}")
@@ -185,7 +186,6 @@ class AresAnalyzerService:
         self._port = port
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         self._service_wrapper = AresAnalyzerServiceWrapper(info=self.info, timeout=timeout, custom_analysis_logic=custom_analysis_logic)
-        #self._service_wrapper.SetCapabilities(self._capabilities)
         analyzer_service_grpc.add_AresRemoteAnalyzerServiceServicer_to_server(self._service_wrapper, self._server)
 
         if use_localhost:
