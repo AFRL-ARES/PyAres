@@ -9,6 +9,7 @@ from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2_grp
 from ares_datamodel.analyzing import analysis_pb2
 from ares_datamodel.analyzing import analyzer_capabilities_pb2
 from ares_datamodel.connection import connection_state_pb2
+from ares_datamodel.connection import connection_status_pb2
 from ares_datamodel.connection import connection_info_pb2
 from ares_datamodel import ares_data_type_pb2
 from ares_datamodel import ares_data_schema_pb2
@@ -127,7 +128,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
 
     def GetConnectionStatus(self, request, context):
         try:
-            connection_state_pb2.StateResponse(status=connection_state_pb2.State.ACTIVE)
+            return connection_status_pb2.ConnectionStatus(status=connection_status_pb2.AresStatus.CONNECTED)
 
         except Exception as e:
             print(f"Exception while trying to respond to ARES with connection status! {e}")
@@ -172,14 +173,14 @@ class AresAnalyzerService:
         Initializes the AresAnalyzerService.
 
         Args:
-            custom_analysis_logic: A callable function that will be executed when an Analyze request is received.
+            custom_analysis_logic (`AnalyzeLogicFunction`): A callable function that will be executed when an Analysis request is received.
                 This function should accept a `PyAres.Analyzing.AnalysisRequest` object and return a
                 `PyAres.Analyzing.Analysis` object (or an awaitable that resolves to one).
-            name: The name of your analyzer.
-            version: The version of your analyzer.
-            description: A brief description of your analyzer.
-            use_localhost: If true, binds to localhost. Otherwise, binds to [::].
-            port: The port that your analyzer service will serve on. Defaults to port 7083.
+            name (str): The name of your analyzer.
+            version (str): The version of your analyzer.
+            description (str): A brief description of your analyzer.
+            use_localhost (bool): If true, binds to localhost. Otherwise, binds to [::].
+            port (int): The port that your analyzer service will serve on. Defaults to port 7083.
         """
         self.info = InfoResponse(name=name, version=version, description=description)
         self._capabilities = analyzer_capabilities_pb2.AnalyzerCapabilities(settings_schema={})
