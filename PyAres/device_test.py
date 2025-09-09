@@ -19,7 +19,7 @@ class DemoDevice:
     return {}
 
   def get_temperature(self):
-    return self.temperature
+    return {"temperature": self.temperature}
 
   def move_to_next_pillar(self):
     self.current_pillar_number += 1
@@ -27,7 +27,7 @@ class DemoDevice:
     time.sleep(5)
 
   def get_current_growth(self):
-    return self.current_growth
+    return {"growth": self.current_growth}
   
   def get_device_state(self):
     state_dict = {}
@@ -52,6 +52,10 @@ if __name__ == "__main__":
   input_schema = { "temperature": parameter_schema }
   descriptor = DeviceCommandDescriptor("Set Temperature", "Set's the temperature of the demo device to the provided value.", input_schema, {})
   device_service.add_new_command(descriptor, device.set_temperature)
+
+  output_schema = {"temperature": DeviceSchemaEntry(AresDataType.NUMBER, False, "The current temperature of the device", "Degree's Celsius")}
+  get_temp_desc = DeviceCommandDescriptor("Get Temperature", "Get's the current temperature of the demo device.", {}, output_schema)
+  device_service.add_new_command(get_temp_desc, device.get_temperature)
 
   #Add Test Settings
   device_service.add_setting("String Setting", AresDataType.STRING)

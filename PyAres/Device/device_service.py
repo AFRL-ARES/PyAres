@@ -1,6 +1,7 @@
 import grpc
 import inspect
 import time
+import warnings
 from concurrent import futures
 from typing import Dict, Callable, Awaitable, Union
 
@@ -15,6 +16,7 @@ from ares_datamodel import ares_struct_pb2
 from google.protobuf.empty_pb2 import Empty
 
 from .device_models import DeviceCommandDescriptor
+from .device_warnings import ParameterMismatchWarning
 from ..Models import ares_data_models
 from ..Utils import ares_device_command_utils
 from ..Utils import ares_data_schema_utils
@@ -105,7 +107,6 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
         context.set_details(f"Error in safe mode logic: {e}")
   
   def GetSettingsSchema(self, request, context) -> device_service.SettingsSchemaResponse:
-    print("Settings Schema Requested!")
     response = device_service.SettingsSchemaResponse()
     for key, value in self._setting_schema.items():
       settings_entry = response.schema.fields[key]
@@ -121,7 +122,6 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
     return response
 
   def GetCurrentSettings(self, request, context) -> device_service.CurrentSettingsResponse:
-    print("Getting Current Settings....")
     try:
       response = device_service.CurrentSettingsResponse()
       for key, value in self._current_settings.items():
@@ -134,7 +134,6 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       print(f"EXCEPTION CAUGHT: {e}")
   
   def SetSettings(self, request: device_service.SetSettingsRequest, context) -> None:
-    print("Settings Being Updated....")
     self._current_settings = ares_struct_utils.ares_struct_to_dict(request.settings)
     return Empty()
   
@@ -236,9 +235,16 @@ class AresDeviceService:
     Adds a new command for use with this device that is reported to ARES.
 
     Args:
-      cmd_descriptor:
-      method: 
+      cmd_descriptor (`PyAres.Device.DeviceCommandDescriptor`): A DeviceCommandDescriptor object that contains all the necessary information that ARES needs about your command.
+      method (Callable[..., Dict[str, any]]): Your command method. This method can take in any number of arguments, but should always return a dictionary of it's results.
     """
+    method_signature = inspect.signature(method)
+    num_method_parameters: int = len(method_signature.parameters.items())
+    num_desc_parameters: int = len(cmd_descriptor.input_schema.items())
+
+    if num_method_parameters != num_desc_parameters:
+      warnings.warn(f"A mismatch in the number of input parameters your command method {method.__name__} and command descriptor expects was detected! This may result in unexpected behavior!")
+
     self._service_wrapper._command_methods[cmd_descriptor.name] = method
     self._service_wrapper._commands.append(cmd_descriptor)
 

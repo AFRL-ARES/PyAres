@@ -18,7 +18,7 @@ def python_command_description_to_proto(python_description: DeviceCommandDescrip
 
   transformed_output_schema = {key: python_device_schema_entry_to_proto(value) for key, value in python_description.output_schema.items()}
   for key, value in transformed_output_schema.items():
-    new_entry: ares_data_schema_pb2.SchemaEntry = proto_description.input_schema.fields[key]
+    new_entry: ares_data_schema_pb2.SchemaEntry = proto_description.output_schema.fields[key]
     new_entry.CopyFrom(value)
 
   proto_description.name = python_description.name
