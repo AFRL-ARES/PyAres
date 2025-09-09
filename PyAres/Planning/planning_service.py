@@ -78,9 +78,9 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
             print(f"Exception while trying to respond to ARES with information! {e}")
     
     def GetState(self, request, context) -> connection_state_pb2.StateResponse:
+        #This is wrong... fix
         try:
-            planner_state = connection_state_pb2.StateResponse(state=connection_state_pb2.State.ACTIVE, state_message=f"{self._service_name} is active!")
-            return planner_state
+            return connection_state_pb2.StateResponse(state=connection_state_pb2.State.ACTIVE, state_message=f"{self._service_name} is active!")
         
         except Exception as e:
             print(f"Exception while trying to respond to ARES with state! {e}")
@@ -88,7 +88,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
     
     def GetConnectionStatus(self, request, context):
         try:
-            connection_state_pb2.StateResponse(status=connection_state_pb2.State.ACTIVE, state_message=f"{self._service_name} is active!")
+            return connection_state_pb2.StateResponse(status=connection_state_pb2.State.ACTIVE, state_message=f"{self._service_name} is active!")
 
         except Exception as e:
             print(f"Exception while trying to respond to ARES with connection status! {e}")

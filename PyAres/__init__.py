@@ -6,4 +6,7 @@ from .Analyzing import AresAnalyzerService
 from .Analyzing import Analysis
 from .Analyzing import AnalysisRequest
 from .Analyzing import InfoResponse
+from .Device import AresDeviceService
+from .Device import DeviceCommandDescriptor
+from .Device import DeviceSchemaEntry
 from .Models import AresDataType

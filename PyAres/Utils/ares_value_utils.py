@@ -3,6 +3,8 @@ from ares_datamodel import ares_data_type_pb2
 from typing import Union
 
 from . import ares_struct_utils
+from . import ares_data_type_utils
+from ..Models import AresDataType 
 
 def ares_value_to_py(ares_value: ares_struct_pb2.AresValue):
     """Converts an AresValue protobuf message to a Python native type."""
@@ -76,7 +78,8 @@ def create_number_array(value: list[Union[int, float]]) -> ares_struct_pb2.AresV
     Returns:
         (AresValue): A new AresValue containing the provided list of numbers.
     """
-    return ares_struct_pb2.AresValue(number_array_value=value)
+    num_array = ares_struct_pb2.NumberArray(numbers=value)
+    return ares_struct_pb2.AresValue(number_array_value=num_array)
 
 def create_string_array(value: list[str]) -> ares_struct_pb2.AresValue:
     """
@@ -88,7 +91,8 @@ def create_string_array(value: list[str]) -> ares_struct_pb2.AresValue:
     Returns:
         (AresValue): A new AresValue containing the provided list of strings.
     """
-    return ares_struct_pb2.AresValue(string_array_value=value)
+    str_array = ares_struct_pb2.StringArray(strings=value)
+    return ares_struct_pb2.AresValue(string_array_value=str_array)
 
 def create_null() -> ares_struct_pb2.AresValue:
     """
@@ -135,7 +139,7 @@ def create_bool_array(value: list[bool]) -> ares_struct_pb2.AresValue:
     """
     return ares_struct_pb2.AresValue(bool_array_value=value)
 
-def create_default(dataType: ares_data_type_pb2.AresDataType) -> ares_struct_pb2.AresValue:
+def create_default(python_datatype: AresDataType) -> ares_struct_pb2.AresValue:
     """
     Creates a new AresValue with a default value for the given AresDataType.
 
@@ -145,6 +149,8 @@ def create_default(dataType: ares_data_type_pb2.AresDataType) -> ares_struct_pb2
     Returns:
         (AresValue): A new AresValue containing the default value.
     """
+    dataType = ares_data_type_utils.python_ares_type_to_proto_ares_type(python_datatype)
+
     if(dataType == ares_data_type_pb2.AresDataType.NULL):
         return create_null()
     
@@ -168,7 +174,6 @@ def create_default(dataType: ares_data_type_pb2.AresDataType) -> ares_struct_pb2
     
     elif(dataType == ares_data_type_pb2.AresDataType.BYTE_ARRAY):
         return create_bytes(bytes())
-    
     else:
         return create_null()
     
@@ -192,17 +197,18 @@ def create_ares_value(value: any) -> ares_struct_pb2.AresValue:
     elif(isinstance(value, bool)):
         return create_bool(value)
     
-    elif(isinstance(value, (list[int], list[float]))):
-        return create_number_array(value)
-    
     elif(isinstance(value, bytes)):
         return create_bool_array(value)
     
-    elif(isinstance(value, list[str])):
-        return create_string_array(value)
-    
-    elif(isinstance(value, list[bool])):
-        return create_bool_array(value)
+    elif(isinstance(value, list)):
+        if all(isinstance(x, (int, float)) for x in value):
+            return create_number_array(value)
+        
+        elif all(isinstance(x, str) for x in value):
+            return create_string_array(value)
+        
+        elif all(isinstance(x, bool) for x in value):
+            return create_bool_array(value)
     
     else:
         return create_null()

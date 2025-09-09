@@ -1,19 +1,18 @@
-from typing import Union
+from typing import Union, Dict
 
 #Datamodel Imports
 from ares_datamodel import ares_data_schema_pb2
-from ares_datamodel import ares_struct_pb2
 
 from ..Models import ares_data_models
-def ares_schema_to_dict(schema: ares_data_schema_pb2.AresDataSchemaSimplified) -> dict:
-    """Converts an AresDataSchemaSimplified to a dictionary for user logic."""
-    result = {}
-    for key, entry in schema.schema.items():
-        result[key] = {
-            "type": ares_data_schema_pb2.AresDataType.Name(entry.type),
-            "is_array": entry.is_array
-        }
-    return result
+# def ares_schema_to_dict(schema: ares_data_schema_pb2.AresDataSchema) -> dict:
+#     """Converts an AresDataSchemaSimplified to a dictionary for user logic."""
+#     result = {}
+#     for key, entry in schema.fields.items():
+#         result[key] = {
+#             "type": ares_data_schema_pb2.AresDataType.Name(entry.type),
+#             "is_array": entry.is_array
+#         }
+#     return result
 
 def create_settings_schema_entry(
     setting_type: ares_data_models.AresDataType, 

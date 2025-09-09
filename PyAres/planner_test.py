@@ -9,9 +9,13 @@ import random
 def plan(request: PlanRequest) -> PlanResponse:
   print("Planning Requested!")
   new_values = []
+  gpdoods = []
   names = []
 
   for param in request.parameters:
+    if param.planner_name == "GPRDood":
+      gpdoods.append(param)
+
     if param.planner_name == "Random Planner":
       new_value = random_planner(param)
       new_values.append(new_value)

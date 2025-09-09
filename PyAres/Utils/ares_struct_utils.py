@@ -6,7 +6,7 @@ import copy
 
 def ares_struct_to_dict(ares_struct: ares_struct_pb2.AresStruct) -> Dict[str, any]:
     """Converts an AresStruct protobuf message to a Python dictionary."""
-    return {k: ares_value_utils.ares_value_to_py(v) for k, v in ares_struct.fields.items()}
+    return {k: v for k, v in ares_struct.fields.items()}
 
 def ares_string_array_to_list(string_array: ares_struct_pb2.StringArray) -> list[str]:
     """Convert an Ares String Array protobuf message to a Python list of strings."""
@@ -151,7 +151,9 @@ def add_value_to_struct(existing_struct: ares_struct_pb2.AresStruct, key: str, n
         (AresStruct): The provided struct with the new value appended. 
     """
     if replace or key not in existing_struct.fields:
-        existing_struct.fields[key] = copy.deepcopy(new_value)
+        new_entry = existing_struct.fields[key]
+        new_entry.CopyFrom(new_value)
+        
     return existing_struct
 
 def copy_struct(existing_struct: ares_struct_pb2.AresStruct) -> ares_struct_pb2.AresStruct:

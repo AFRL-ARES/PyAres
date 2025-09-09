@@ -28,7 +28,6 @@ AnalyzeLogicFunction = Callable[[AnalysisRequest], Union[Analysis, Awaitable[Ana
 class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerServiceServicer):
     """
     A wrapper around the gRPC service to expose native Python objects for analysis.
-    For internal ARES development use, realistically should never be exposed to the general user.
     """
     def __init__(self, info: InfoResponse, timeout: int, custom_analysis_logic: AnalyzeLogicFunction):
         self._info = info
@@ -91,14 +90,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
 
             for key, value in self._analysis_parameters.items():
                 map_entry = analysisParamResponse.parameter_schema.fields[key]
-                map_entry.type = value.type
-                map_entry.optional = value.optional
-                
-                if len(value.string_choices.strings) != 0:
-                    map_entry.string_choices = value.string_choices
-
-                elif len(value.number_choices.numbers) != 0:
-                    map_entry.number_choices = value.number_choices
+                map_entry.CopyFrom(value)
 
             return analysisParamResponse
     
