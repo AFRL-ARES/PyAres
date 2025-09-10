@@ -53,7 +53,7 @@ if __name__ == "__main__":
   descriptor = DeviceCommandDescriptor("Set Temperature", "Set's the temperature of the demo device to the provided value.", input_schema, {})
   device_service.add_new_command(descriptor, device.set_temperature)
 
-  output_schema = {"temperature": DeviceSchemaEntry(AresDataType.NUMBER, False, "The current temperature of the device", "Degree's Celsius")}
+  output_schema = {"temperature": DeviceSchemaEntry(AresDataType.NUMBER, "The current temperature of the device", "Degree's Celsius")}
   get_temp_desc = DeviceCommandDescriptor("Get Temperature", "Get's the current temperature of the demo device.", {}, output_schema)
   device_service.add_new_command(get_temp_desc, device.get_temperature)
 

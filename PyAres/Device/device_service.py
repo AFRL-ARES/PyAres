@@ -198,9 +198,7 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       print(f"gRPC error occured in device state stream")
 
 class AresDeviceService:
-  """
-  Manages the gRPC service for the AresDeviceSerivce
-  """
+  """ Manages the gRPC service for the AresDeviceSerivce """
   def __init__(self, enter_safe_mode_logic: EnterSafeModeMethod, get_device_state_logic: DeviceStateMethod, device_name: str, description: str, version: str, use_localhost: bool = True, port: int = 7100):
     """
     Initializes the AresDeviceService
@@ -256,23 +254,19 @@ class AresDeviceService:
       setting_name (str): The name of the setting.
       setting_type (AresDataType): The type of this settings value.
       optional (bool): Whether the setting is optional
-      constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
+      constraints: An optional list of values to constrain the available setting choices. Can be integers, floats, or strings.
     """
     self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints)
     new_ares_value = ares_value_utils.create_default(setting_type)
     self._service_wrapper._current_settings[setting_name] = new_ares_value
 
   def start(self):
-    """
-    Starts the service on the specified port, and waits for termination.
-    """
+    """ Starts the service on the specified port, and waits for termination. """
     print(f"Starting Ares Device Service on port {self._port}...")
     self._server.start()
     self._server.wait_for_termination()
 
   def stop(self):
-    """
-    Stops the service, terminating the connection.
-    """
+    """ Stops the service, terminating the connection. """
     print("Stopping Ares Device Service...")
     self._server.stop(0).wait()    
