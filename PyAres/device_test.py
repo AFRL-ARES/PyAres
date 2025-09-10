@@ -20,19 +20,10 @@ class DemoDevice:
 
   def get_temperature(self):
     return {"temperature": self.temperature}
-
-  def move_to_next_pillar(self):
-    self.current_pillar_number += 1
-    self.current_growth - 0.0
-    time.sleep(5)
-
-  def get_current_growth(self):
-    return {"growth": self.current_growth}
   
   def get_device_state(self):
     state_dict = {}
     state_dict["temperature"] = self.temperature
-    state_dict["growth"] = self.current_growth
     return state_dict
   
   def enter_safe_mode(self):
@@ -48,7 +39,7 @@ if __name__ == "__main__":
   device_service = AresDeviceService(device.enter_safe_mode, device.get_device_state, device_name, description, version)
 
   #Create Command Descriptor, then add command
-  parameter_schema = DeviceSchemaEntry(AresDataType.NUMBER, False, "A numeric temperature value", "Degree's Celsius")
+  parameter_schema = DeviceSchemaEntry(AresDataType.NUMBER, "A numeric temperature value", "Degree's Celsius")
   input_schema = { "temperature": parameter_schema }
   descriptor = DeviceCommandDescriptor("Set Temperature", "Set's the temperature of the demo device to the provided value.", input_schema, {})
   device_service.add_new_command(descriptor, device.set_temperature)
