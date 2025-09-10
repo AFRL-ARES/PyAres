@@ -1,10 +1,34 @@
+from typing import Union
 from ares_datamodel import ares_data_type_pb2
-from ..Models import ares_data_models
+from ..Models import AresDataType
 
-def python_ares_type_to_proto_ares_type(py_value: ares_data_models.AresDataType) -> ares_data_type_pb2.AresDataType:
+def python_ares_type_to_proto_ares_type(py_value: AresDataType) -> ares_data_type_pb2.AresDataType:
   """ A method to convert from the python AresDataType class to the protobuf version """
   return py_value.value
 
-def proto_ares_type_to_python_ares_type(proto_value: ares_data_type_pb2.AresDataType) -> ares_data_models.AresDataType:
+def proto_ares_type_to_python_ares_type(proto_value: ares_data_type_pb2.AresDataType) -> AresDataType:
   """ A method to convert from the protobuf AresDataType class to the python version """
-  return ares_data_models.AresDataType(proto_value)
+  return AresDataType(proto_value)
+
+def determine_python_ares_data_type(value: Union[int, float, str, bool, list]):
+  """ A method that takes in a value and returns the corresponding `PyAres.Models.AresDataType`"""
+  match value:
+    case str():
+      return AresDataType.STRING
+    case bool():
+      return AresDataType.BOOLEAN
+    case int():
+      return AresDataType.NUMBER
+    case float():
+      return AresDataType.NUMBER
+    case list():
+      if(all(isinstance(x, str) for x in value)):
+        return AresDataType.STRING_ARRAY
+      elif(all(isinstance(x, (int, float)) for x in value)):
+        return AresDataType.NUMBER_ARRAY
+      elif(all(isinstance(x, bool)) for x in value):
+        return AresDataType.BOOL_ARRAY
+      else:
+        return AresDataType.UNKNOWN
+    case _:
+      return AresDataType.UNKNOWN

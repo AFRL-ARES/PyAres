@@ -16,12 +16,11 @@ from ares_datamodel import ares_struct_pb2
 from google.protobuf.empty_pb2 import Empty
 
 from .device_models import DeviceCommandDescriptor
-from .device_warnings import ParameterMismatchWarning
-from ..Models import ares_data_models
 from ..Utils import ares_device_command_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_struct_utils
 from ..Utils import ares_value_utils
+from ..Utils import ares_data_type_utils
 
 # Type hint for the user's custom methods
 EnterSafeModeMethod = Callable[[], None]
@@ -246,7 +245,7 @@ class AresDeviceService:
     self._service_wrapper._command_methods[cmd_descriptor.name] = method
     self._service_wrapper._commands.append(cmd_descriptor)
 
-  def add_setting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = []):
+  def add_setting(self, setting_name: str, setting_value: Union[int, float, str, bool, bytes, list], optional: bool = True, constraints: Union[list[int], list[str], list[float]] = []):
     """
     Adds a new device setting to be reported to ARES when your devices capabilities are requested.
 
@@ -256,8 +255,9 @@ class AresDeviceService:
       optional (bool): Whether the setting is optional
       constraints: An optional list of values to constrain the available setting choices. Can be integers, floats, or strings.
     """
+    setting_type = ares_data_type_utils.determine_python_ares_data_type(setting_value)
     self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints)
-    new_ares_value = ares_value_utils.create_default(setting_type)
+    new_ares_value = ares_value_utils.create_ares_value(setting_value)
     self._service_wrapper._current_settings[setting_name] = new_ares_value
 
   def start(self):
