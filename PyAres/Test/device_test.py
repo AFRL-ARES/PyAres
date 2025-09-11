@@ -9,21 +9,17 @@ class DemoDevice:
   # A simulated device. In reality, these communications would be happening with external hardware over serial, usb, etc.
   def __init__(self):
     self.temperature = 0.0
-    self.current_pillar_number = 1
-    self.current_growth = 0.0
 
   def set_temperature(self, temperature: float):
     self.temperature = temperature
-    print("Temperature is being set!")
     time.sleep(5)
     return {}
 
   def get_temperature(self):
-    return {"temperature": self.temperature}
+    return { "temperature": self.temperature }
   
   def get_device_state(self):
-    state_dict = {}
-    state_dict["temperature"] = self.temperature
+    state_dict = { "temperature": self.temperature }
     return state_dict
   
   def enter_safe_mode(self):
@@ -38,23 +34,18 @@ if __name__ == "__main__":
   version = "1.0.0"
   device_service = AresDeviceService(device.enter_safe_mode, device.get_device_state, device_name, description, version)
 
-  #Create Command Descriptor, then add command
+  # Create the "Set Temperature" Command
   parameter_schema = DeviceSchemaEntry(AresDataType.NUMBER, "A numeric temperature value", "Degree's Celsius")
   input_schema = { "temperature": parameter_schema }
-  descriptor = DeviceCommandDescriptor("Set Temperature", "Set's the temperature of the demo device to the provided value.", input_schema, {})
-  device_service.add_new_command(descriptor, device.set_temperature)
+  set_temp_descriptor = DeviceCommandDescriptor("Set Temperature", "Set's the temperature of the demo device to the provided value.", input_schema, {})
+  device_service.add_new_command(set_temp_descriptor, device.set_temperature)
 
+  # Create the "Get Temperature" Command
   output_schema = {"temperature": DeviceSchemaEntry(AresDataType.NUMBER, "The current temperature of the device", "Degree's Celsius")}
   get_temp_desc = DeviceCommandDescriptor("Get Temperature", "Get's the current temperature of the demo device.", {}, output_schema)
   device_service.add_new_command(get_temp_desc, device.get_temperature)
 
-  #Add Test Settings
-  device_service.add_setting("String Setting", AresDataType.STRING)
-  device_service.add_setting("Number Setting", AresDataType.NUMBER)
-  device_service.add_setting("Boolean Setting", AresDataType.BOOLEAN)
-  device_service.add_setting("Number Array Setting", AresDataType.NUMBER_ARRAY)
-  device_service.add_setting("String Array Setting", AresDataType.STRING_ARRAY)
-  device_service.add_setting("Constrained Strings", AresDataType.STRING, True, ["StringOne", "StringTwo", "StringThree"])
-  device_service.add_setting("Constrained Numbers", AresDataType.NUMBER, True, [1, 2, 3])
+  #Add Settings
+  device_service.add_setting("Allow Negative Values", True)
 
   device_service.start()
