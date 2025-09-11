@@ -87,9 +87,61 @@ if __name__ == "__main__":
 ```
 This example creates a simple analyzer that expects to receive two values from ARES, growth and temperature. It then returns a simple static value of six as the analysis result.
 
-### Devices
+###  💻 Device Usage
 
-🚧 Coming Soon 🚧
+PyAres gives you the ability to create devices to communicate with your ARES system. Typically your device would be external hardware connected via serial port or USB to your computer. For demonstration purposes, below is a simulated device that has a modifiable temperature value. It's temperature can be set with the set_temperature method, or retrieved with the get_temperature method. We use a five second delay in the set_temperature method to simulate a delayed response from hardward. It also implements the get_device_state method which returns any data ARES should log as this devices state, and enter_safe_mode to fulfill the required ability for ARES to be able to reset any device to a known state.
+
+```Python
+class DemoDevice:
+  # A simulated device. In reality, these communications would be happening with external hardware over serial, usb, etc.
+  def __init__(self):
+    self.temperature = 0.0
+
+  def set_temperature(self, temperature: float):
+    self.temperature = temperature
+    time.sleep(5)
+    return {}
+
+  def get_temperature(self):
+    # Dictionary key should match what we defined in our schema earlier
+    return { "temperature": self.temperature }
+  
+  def get_device_state(self):
+    state_dictionary = { "temperature": self.temperature }
+    return state_dictionary
+  
+  def enter_safe_mode(self):
+    self.temperature = 0
+```
+
+PyAres can be used to connect this simulated device with ARES. Below is a basic example of setting up a PyAres device.
+
+```Python
+device = DemoDevice()
+
+if __name__ == "__main__":
+  # Basic information about my device
+  device_name = "Demo Device"
+  description = "A device to demonstrate the PyAres device capabilities"
+  version = "1.0.0"
+  device_service = AresDeviceService(device.enter_safe_mode, device.get_device_state, device_name, description, version)
+
+  #Create Command Descriptor, then add command
+  parameter_schema = DeviceSchemaEntry(AresDataType.NUMBER, "A numeric temperature value", "Degree's Celsius")
+  input_schema = { "temperature": parameter_schema }
+  descriptor = DeviceCommandDescriptor("Set Temperature", "Set's the temperature of the demo device to the provided value.", input_schema, {})
+  device_service.add_new_command(descriptor, device.set_temperature)
+
+  output_schema = {"temperature": DeviceSchemaEntry(AresDataType.NUMBER, "The current temperature of the device", "Degree's Celsius")}
+  get_temp_desc = DeviceCommandDescriptor("Get Temperature", "Get's the current temperature of the demo device.", {}, output_schema)
+  device_service.add_new_command(get_temp_desc, device.get_temperature)
+
+  #Add Settings
+  device_service.add_setting("Allow Negative Values", True)
+
+  device_service.start()
+```
+The central component to your PyAres device is your AresDeviceService. This class acts as a bridge, managing all gRPC communications between PyAres and ARES, and provides the ability to define the behavior and capabilities of your device. Here we create a device with two commands; "Get Temperature" and "Set Temperature". To define commands in PyAres, you must provide a defined schema for both the input and output of the command in the form of a dictionary. This gives the PyAres user a flexible way to represent the data that your commands expect to receive, as well as the data ARES should expect to come from your commands. This information becomes part of your DeviceCommandDescriptor, which also holds a name for your command as well as a brief description. We then report our command capabilities to ARES via the add_new_command method. This method takes in our descriptor, and a reference to the method you defined for your command. 
 
 ### 📄 License
 
