@@ -16,6 +16,8 @@ def determine_python_ares_data_type(value: Union[int, float, str, bool, list]):
     case str():
       return AresDataType.STRING
     case bool():
+      # Boolean is a subtype of int, meaning we have to check if it's a bool
+      # before we check if it's an int, otherwise every bool would return an int instead.
       return AresDataType.BOOLEAN
     case int():
       return AresDataType.NUMBER
