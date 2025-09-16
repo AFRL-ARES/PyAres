@@ -6,7 +6,7 @@ import copy
 
 def ares_struct_to_dict(ares_struct: ares_struct_pb2.AresStruct) -> Dict[str, any]:
     """Converts an AresStruct protobuf message to a Python dictionary."""
-    return {k: v for k, v in ares_struct.fields.items()}
+    return {k: ares_value_utils.ares_value_to_py(v) for k, v in ares_struct.fields.items()}
 
 def ares_string_array_to_list(string_array: ares_struct_pb2.StringArray) -> list[str]:
     """Convert an Ares String Array protobuf message to a Python list of strings."""
