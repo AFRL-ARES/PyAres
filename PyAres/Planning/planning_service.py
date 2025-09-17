@@ -109,6 +109,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
                     maxiumum_value=proto_param.maximum_value,
                     minimum_value=proto_param.minimum_value,
                     param_history=[ares_value_utils.ares_value_to_py(val) for val in proto_param.parameter_history],
+                    analysis_results=[val for val in proto_param.analysis_results],
                     data_type=ares_data_type_utils.proto_ares_type_to_python_ares_type(proto_param.data_type),
                     is_planned=proto_param.is_planned,
                     is_result=proto_param.is_result,
