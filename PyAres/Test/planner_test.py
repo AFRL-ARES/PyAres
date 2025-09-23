@@ -36,7 +36,7 @@ def plan(request: PlanRequest) -> PlanResponse:
 
 def random_planner(param: PlanningParameter) -> float:
   if param.data_type == AresDataType.NUMBER:
-    return random.uniform(param.minimum_value, param.maxiumum_value)
+    return random.uniform(param.minimum_value, param.maximum_value)
  
   else:
     print("Found a non-number....")
@@ -50,7 +50,7 @@ def gradual_planner(param: PlanningParameter) -> float:
     previous_value = param.param_history[-1]
     previous_value += 5
 
-    if previous_value > param.maxiumum_value:
+    if previous_value > param.maximum_value:
       return param.minimum_value
     
     else:

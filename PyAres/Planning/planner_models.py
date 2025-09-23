@@ -8,7 +8,7 @@ class PlanningParameter:
     with planning parameters through.
     """
     def __init__(self, name: str, minimum_value: float, 
-                 maxiumum_value: float, param_history: list, analysis_results: list[float], data_type: str, 
+                 maximum_value: float, param_history: list, analysis_results: list[float], data_type: str, 
                  is_planned: bool, is_result: bool, planner_name: str):
         """
         Initializes a PlanningParameter.
@@ -26,7 +26,7 @@ class PlanningParameter:
         """
         self.name = name
         self.minimum_value = minimum_value
-        self.maxiumum_value = maxiumum_value
+        self.maximum_value = maximum_value
         self.param_history = param_history
         self.analysis_results = analysis_results
         self.data_type = data_type
