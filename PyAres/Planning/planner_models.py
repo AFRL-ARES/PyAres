@@ -8,7 +8,7 @@ class PlanningParameter:
     with planning parameters through.
     """
     def __init__(self, name: str, minimum_value: float, 
-                 maximum_value: float, param_history: list, analysis_results: list[float], data_type: str, 
+                 maximum_value: float, param_history: list, data_type: str, 
                  is_planned: bool, is_result: bool, planner_name: str):
         """
         Initializes a PlanningParameter.
@@ -28,7 +28,6 @@ class PlanningParameter:
         self.minimum_value = minimum_value
         self.maximum_value = maximum_value
         self.param_history = param_history
-        self.analysis_results = analysis_results
         self.data_type = data_type
         self.is_planned = is_planned
         self.is_result = is_result
@@ -40,7 +39,7 @@ class PlanRequest:
 
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
-    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, any]):
+    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, any], analysis_results: list[float]):
         """
         Initializes a PlanRequest.
 
@@ -49,6 +48,7 @@ class PlanRequest:
         """
         self.parameters = parameters
         self.settings = settings
+        self.analysis_results = analysis_results
 
 class PlanResponse:
     """ Represents a PlanResponse message to be send to ARES. """
