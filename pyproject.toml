@@ -7,16 +7,16 @@ include = ["PyAres*"]
 
 [project]
 name = "PyAres"
-version = "0.1.1"
+version = "0.1.2"
 authors = [ { name = "AFRL", email = "AFRL.RX.AREScontact@us.af.mil" }, ]
 description = "The official Python libray for ARES."
 license = "MIT"
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 
 dependencies = [  
-    "grpcio-tools (>=1.74.0)",
+    "grpcio-tools (>=1.75.1)",
     "grpcio (>=1.71.0,<2.0.0)",
-    "ares-datamodel (>=0.9.0b1)"
+    "ares-datamodel (>=12.1.1b1)"
 ]
 
 [project.urls]
