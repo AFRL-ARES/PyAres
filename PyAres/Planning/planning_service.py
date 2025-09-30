@@ -99,7 +99,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         Implements the gRPC Plan method. This method converts protobuf requests to native Python objects
         before executing the users custom planning logic and converting their response back to protobuf.
         """
-        print("Received a plan request!")
+        #print("Received a plan request!")
         parameters = []
         for proto_param in request.planning_parameters:
             parameters.append(
@@ -108,7 +108,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
                     name=proto_param.parameter_name,
                     maximum_value=proto_param.maximum_value,
                     minimum_value=proto_param.minimum_value,
-                    param_history=[ares_value_utils.ares_value_to_py(val) for val in proto_param.parameter_history],
+                    param_history=[ParameterHistoryItem(ares_value_utils.ares_value_to_py(val.planned_value), ares_value_utils.ares_value_to_py(val.achieved_value)) for val in proto_param.parameter_history],
                     analysis_results=[val for val in proto_param.analysis_results],
                     data_type=ares_data_type_utils.proto_ares_type_to_python_ares_type(proto_param.data_type),
                     is_planned=proto_param.is_planned,
@@ -137,7 +137,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
             new_planned_parameter = response_proto.planned_parameters.add()
             new_planned_parameter.CopyFrom(planned_parameter)
 
-        print("Sending Plan Response.....")
+        #print("Sending Plan Response.....")
         return response_proto
     
 class AresPlannerService:

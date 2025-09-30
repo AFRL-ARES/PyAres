@@ -2,6 +2,7 @@ from .Planning import AresPlannerService
 from .Planning import PlanResponse
 from .Planning import PlanRequest
 from .Planning import PlanningParameter
+from .Planning import ParameterHistoryItem
 from .Analyzing import AresAnalyzerService
 from .Analyzing import Analysis
 from .Analyzing import AnalysisRequest

@@ -1,4 +1,17 @@
-from typing import Dict
+from typing import Dict, Any
+
+class ParameterHistoryItem:
+    """ Represents a single historical parameter item """
+    def __init__(self, planned_value: Any, achieved_value: Any):
+        """
+        Initializes a ParameterHistoryItem
+
+        Args:
+          planned_value: A value that was planned
+          achieved_value: Optionally a value that was actually achieved for what was planned
+        """
+        self.planned_value = planned_value
+        self.achieved_value = achieved_value
 
 class PlanningParameter:
     """
@@ -8,7 +21,7 @@ class PlanningParameter:
     with planning parameters through.
     """
     def __init__(self, name: str, minimum_value: float, 
-                 maximum_value: float, param_history: list, analysis_results: list[float], data_type: str, 
+                 maximum_value: float, param_history: list[ParameterHistoryItem], analysis_results: list[float], data_type: str, 
                  is_planned: bool, is_result: bool, planner_name: str):
         """
         Initializes a PlanningParameter.
@@ -18,7 +31,7 @@ class PlanningParameter:
             value: The value of the parameter.
             minimum_value: The minimum value the parameter is capable of being assigned.
             maximum_value: The maximum value the parameter is capable of being assigned.
-            param_history: A list of historical values associated with the parameter.
+            param_history: A list of historical planned and achieved values associated with the parameter.
             data_type: The data type associated with the parameter.
             is_planned: A bool representing whether this parameter is designed to be planned for.
             is_result: A bool representing whether this parameter is the intended result of the experiment.
@@ -40,7 +53,7 @@ class PlanRequest:
 
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
-    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, any]):
+    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any]):
         """
         Initializes a PlanRequest.
 
