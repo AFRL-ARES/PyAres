@@ -32,7 +32,7 @@ def plan(request: PlanRequest) -> PlanResponse:
     names = []
 
     for param in request.parameters:
-        planned_values.append(random.uniform(param.minimum_value, param.maxiumum_value))
+        planned_values.append(random.uniform(param.minimum_value, param.maximum_value))
         names.append(param.name)
 
     return PlanResponse(parameter_names=names, parameter_values=planned_values)
