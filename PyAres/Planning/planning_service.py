@@ -115,7 +115,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
                     planner_name=proto_param.planner_name
                 ))
         
-        python_request = PlanRequest(parameters=parameters, settings=ares_struct_utils.ares_struct_to_dict(request.adapter_settings), analysis_results=request.analysis_results)
+        python_request = PlanRequest(parameters=parameters, settings=ares_struct_utils.ares_struct_to_dict(request.adapter_settings), analysis_results=list(request.analysis_results))
         
         #Handle call using the user's custom planning logic 
         try:
