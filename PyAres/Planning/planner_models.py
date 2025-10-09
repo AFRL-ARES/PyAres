@@ -52,7 +52,7 @@ class PlanRequest:
 
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
-    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: list[float]):
+    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: list[float], session_id: str):
         """
         Initializes a PlanRequest.
 
@@ -62,6 +62,8 @@ class PlanRequest:
         self.parameters = parameters
         self.settings = settings
         self.analysis_results = analysis_results
+        self.session_id = session_id
+
 
 class PlanResponse:
     """ Represents a PlanResponse message to be send to ARES. """
