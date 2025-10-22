@@ -145,4 +145,4 @@ The central component to your PyAres device is your AresDeviceService. This clas
 
 ### 📄 License
 
-The PyAres project is licensed under the USAF Open Source Agreement Version 1.0 - see details in [LICENSE.txt](https://github.com/AFRL-ARES/PyAres/blob/Develop/LICENSE.txt)
+The PyAres project is licensed under the MIT License - see details in [LICENSE.txt]([https://github.com/AFRL-ARES/PyAres/blob/Develop/LICENSE.txt](https://github.com/AFRL-ARES/PyAres/blob/Develop/LICENSE))
