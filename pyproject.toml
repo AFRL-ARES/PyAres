@@ -9,7 +9,7 @@ include = ["PyAres*"]
 name = "PyAres"
 version = "0.1.4"
 authors = [{ name = "AFRL", email = "AFRL.RX.AREScontact@us.af.mil" }]
-description = "The official Python libray for ARES."
+description = "The official Python library for ARES."
 license = "MIT"
 requires-python = ">= 3.10"
 

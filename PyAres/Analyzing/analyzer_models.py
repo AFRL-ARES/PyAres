@@ -1,4 +1,5 @@
 from typing import Dict
+from ..Models import Outcome
 
 class AnalysisRequest:
     """ Represents an analysis request received from ARES. """
@@ -10,7 +11,7 @@ class AnalysisRequest:
 class Analysis:
     """ Represents the result of an analysis process. """
 
-    def __init__(self, result: float, success: bool, error_string: str = ""):
+    def __init__(self, result: float, outcome: Outcome, error_string: str = ""):
         """
         Initializes an Analysis message
 
@@ -20,7 +21,7 @@ class Analysis:
             error_string: An optional string argument for passing why analysis failed to ARES. Will default to an empty string if no value is provided.
         """
         self.result = result
-        self.success = success
+        self.outcome = outcome
         self.error_string = error_string
    
 

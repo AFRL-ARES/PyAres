@@ -10,3 +10,10 @@ class AresDataType(Enum):
     NUMBER_ARRAY = 6
     BYTE_ARRAY = 7
     BOOL_ARRAY = 8
+
+class Outcome(Enum):
+    UNSPECIFIED_OUTCOME = 0
+    SUCCESS = 1
+    FAILURE = 2
+    WARNING = 3
+    CANCELED = 4

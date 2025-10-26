@@ -11,3 +11,4 @@ from .Device import AresDeviceService
 from .Device import DeviceCommandDescriptor
 from .Device import DeviceSchemaEntry
 from .Models import AresDataType
+from .Models import Outcome

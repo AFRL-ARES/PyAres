@@ -65,7 +65,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             print("Sending Analysis Response.....")
             return analysis_pb2.Analysis(
                 result=python_response.result,
-                success=python_response.success,
+                analysis_outcome=python_response.outcome,
                 error_string=python_response.error_string
             )
         
