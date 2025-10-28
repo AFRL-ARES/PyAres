@@ -1,4 +1,4 @@
-from Models import Outcome
+from ..Models import Outcome
 from ares_datamodel import ares_outcome_enum_pb2
 
 def python_ares_outcome_to_proto_ares_outcome(py_value: Outcome) -> ares_outcome_enum_pb2.Outcome:

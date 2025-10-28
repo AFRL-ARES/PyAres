@@ -125,7 +125,8 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       response = device_service.CurrentSettingsResponse()
       for key, value in self._current_settings.items():
         new_entry = response.settings.fields[key]
-        new_entry.CopyFrom(value)
+        new_ares_value = ares_value_utils.create_ares_value(value)
+        new_entry.CopyFrom(new_ares_value)
 
       return response
     

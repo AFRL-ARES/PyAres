@@ -17,6 +17,7 @@ from ares_datamodel import ares_data_schema_pb2
 # Import Utilities
 from ..Utils import ares_struct_utils
 from ..Utils import ares_data_schema_utils
+from ..Utils import ares_outcome_utils
 
 # Import python models
 from ..Models import ares_data_models
@@ -65,14 +66,14 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             print("Sending Analysis Response.....")
             return analysis_pb2.Analysis(
                 result=python_response.result,
-                analysis_outcome=python_response.outcome,
+                analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
                 error_string=python_response.error_string
             )
         
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error in custom analysis logic: {e}")
-            return analysis_pb2.Analysis(success=False, error_string=str(e))
+            return analysis_pb2.Analysis(success=False, analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome), error_string=str(e))
         
     def GetState(self, request, context) -> connection_state_pb2.StateResponse:
         try:

@@ -1,8 +1,4 @@
-from PyAres import AresPlannerService
-from PyAres import PlanRequest
-from PyAres import PlanResponse
-from PyAres import AresDataType
-from PyAres import PlanningParameter
+from PyAres import *
 
 import random
 
@@ -62,7 +58,7 @@ def gradual_planner(param: PlanningParameter) -> float:
 if __name__ == "__main__":
   #Basic details about your planner
   name = "Python Test Planner"
-  version = "0.0.1"
+  version = "1.0.0"
   description = "This is a test planner to demonstrate working with PyAres to create planners!"
   pythonDemoPlanner = AresPlannerService(plan, name, description, version)
 

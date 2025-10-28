@@ -17,6 +17,7 @@ from ..Utils import ares_value_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_data_type_utils
 from ..Utils import ares_struct_utils
+from ..Utils import ares_outcome_utils
 
 # Import python models
 from ..Models import ares_data_models
@@ -131,6 +132,8 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
             context.set_details(f"Error in custom planning logic: {e}")
         
         response_proto = plan_pb2.PlanningResponse()
+        response_proto.planning_outcome = ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome)
+        response_proto.error_string = python_response.error_string
 
         for i in range(len(python_response.parameter_names)):
             planned_parameter = plan_pb2.PlannedParameter(parameter_value=ares_value_utils.create_ares_value(python_response.parameter_values[i]))
@@ -138,7 +141,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
             new_planned_parameter = response_proto.planned_parameters.add()
             new_planned_parameter.CopyFrom(planned_parameter)
 
-        #print("Sending Plan Response.....")
+        print("Sending Plan Response.....")
         return response_proto
     
 class AresPlannerService:

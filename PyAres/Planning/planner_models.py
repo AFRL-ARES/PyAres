@@ -1,4 +1,5 @@
 from typing import Dict, Any
+from ..Models import Outcome
 
 class ParameterHistoryItem:
     """ Represents a single historical parameter item """
@@ -67,7 +68,7 @@ class PlanRequest:
 
 class PlanResponse:
     """ Represents a PlanResponse message to be send to ARES. """
-    def __init__(self, parameter_names: list[str], parameter_values: list):
+    def __init__(self, parameter_names: list[str], parameter_values: list, planning_outcome: Outcome = Outcome.SUCCESS, error_string: str = ""):
         """
         Initializes a PlanResponse.
 
@@ -77,3 +78,5 @@ class PlanResponse:
         """
         self.parameter_names = parameter_names
         self.parameter_values = parameter_values
+        self.outcome = planning_outcome
+        self.error_string = error_string

@@ -11,7 +11,7 @@ class AnalysisRequest:
 class Analysis:
     """ Represents the result of an analysis process. """
 
-    def __init__(self, result: float, outcome: Outcome, error_string: str = ""):
+    def __init__(self, result: float, outcome: Outcome = Outcome.SUCCESS, error_string: str = ""):
         """
         Initializes an Analysis message
 
