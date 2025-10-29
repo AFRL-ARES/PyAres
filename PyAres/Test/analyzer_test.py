@@ -1,18 +1,16 @@
-from PyAres import AresAnalyzerService
-from PyAres import AnalysisRequest
-from PyAres import Analysis
-from PyAres import AresDataType
-from PyAres import Outcome
+from PyAres import AresAnalyzerService, AnalysisRequest, Analysis, AresDataType, Outcome
 
 def analyze(request: AnalysisRequest) -> Analysis:
     #Custom Analysis Logic
-    #growth = request.inputs.get("Growth")
     temperature = request.inputs.get("Temperature")
 
-    #print(f"Growth: {growth}")
+    if not isinstance(temperature, float):
+        print("Temperature was not a float")
+        temperature = 0.0
+
     print(f"Temperature: {temperature}")
 
-    analysis = Analysis(result=temperature, outcome=Outcome.WARNING, error_string="This is a test analyzer warning!")
+    analysis = Analysis(result=temperature)
     return analysis
 
 
@@ -24,7 +22,6 @@ if __name__ == "__main__":
     pythonDemoAnalyzer = AresAnalyzerService(analyze, name, version, description)
 
     #Add Analysis Parameters
-    #pythonDemoAnalyzer.add_analysis_parameter("Growth", AresDataType.NUMBER)
     pythonDemoAnalyzer.add_analysis_parameter("Temperature", AresDataType.NUMBER)
 
     pythonDemoAnalyzer.start()

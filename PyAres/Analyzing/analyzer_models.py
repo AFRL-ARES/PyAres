@@ -1,10 +1,10 @@
-from typing import Dict
+from typing import Dict, Any
 from ..Models import Outcome
 
 class AnalysisRequest:
     """ Represents an analysis request received from ARES. """
 
-    def __init__(self, inputs: Dict[str, any], settings: Dict[str, any]):
+    def __init__(self, inputs: Dict[str, Any], settings: Dict[str, Any]):
         self.inputs = inputs
         self.settings = settings
 

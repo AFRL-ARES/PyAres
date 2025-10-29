@@ -3,17 +3,16 @@ import inspect
 import time
 import warnings
 from concurrent import futures
-from typing import Dict, Callable, Awaitable, Union
+from typing import Dict, Callable, Awaitable, Union, Any
 
 from ares_datamodel.device.remote import ares_remote_device_service_pb2 as device_service
 from ares_datamodel.device.remote import ares_remote_device_service_pb2_grpc as device_service_grpc
 from ares_datamodel.device import device_status_pb2
-from ares_datamodel.device import device_command_descriptor_pb2
 from ares_datamodel.device import device_execution_result_pb2
 from ares_datamodel.device import device_polling_settings_pb2
 from ares_datamodel import ares_data_schema_pb2
 from ares_datamodel import ares_struct_pb2
-from google.protobuf.empty_pb2 import Empty
+from google.protobuf import empty_pb2
 
 from .device_models import DeviceCommandDescriptor
 from ..Utils import ares_device_command_utils
@@ -67,7 +66,11 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
     response = device_execution_result_pb2.DeviceExecutionResult()
 
     if request.command_name in self._command_methods:
-      method: Callable = self._command_methods.get(request.command_name)
+      method = self._command_methods.get(request.command_name)
+
+      if not isinstance(method, Callable):
+        return device_execution_result_pb2.DeviceExecutionResult(success=False, error="Failed to find a valid remote method that corresponds to the requested action.")
+      
       method_signature = inspect.signature(method)
 
       num_parameters: int = len(method_signature.parameters.items())
@@ -80,7 +83,7 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
 
       #Convert the protobuf map to a Python dictionary
       provided_param_dict = ares_struct_utils.ares_struct_to_dict(request.arguments)
-      result : Dict[str, any] = method(**provided_param_dict)
+      result : Dict[str, Any] = method(**provided_param_dict)
       
       for key, value in result.items():
         ares_struct_utils.add_value_to_struct(response.result, key, ares_value_utils.create_ares_value(value))
@@ -121,8 +124,8 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
     return response
 
   def GetCurrentSettings(self, request, context) -> device_service.CurrentSettingsResponse:
+    response = device_service.CurrentSettingsResponse()
     try:
-      response = device_service.CurrentSettingsResponse()
       for key, value in self._current_settings.items():
         new_entry = response.settings.fields[key]
         new_ares_value = ares_value_utils.create_ares_value(value)
@@ -132,10 +135,11 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
     
     except Exception as e:
       print(f"EXCEPTION CAUGHT: {e}")
+      return response
   
-  def SetSettings(self, request: device_service.SetSettingsRequest, context) -> None:
+  def SetSettings(self, request: device_service.SetSettingsRequest, context) -> empty_pb2.Empty:
     self._current_settings = ares_struct_utils.ares_struct_to_dict(request.settings)
-    return Empty()
+    return empty_pb2.Empty()
   
   def GetStateSchema(self, request, context) -> device_service.StateSchemaResponse:
     response = device_service.StateSchemaResponse()
@@ -160,6 +164,10 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
     proto_response = device_service.DeviceStateResponse()
     proto_response.state = ares_struct_pb2.AresStruct()
 
+    if not isinstance(response, Dict):
+      print("State Response was invalid. All state responses should be returned in the form of a dictionary.")
+      return proto_response
+    
     for key, value in response.items():
       ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
 
@@ -178,6 +186,10 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
             response = response.__await__()
 
           proto_response = device_service.DeviceStateResponse()
+
+          if not isinstance(response, Dict):
+            print("State Response was invalid. All state responses should be returned in the form of a dictionary.")
+            return proto_response
 
           for key, value in response.items():
             ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
@@ -246,13 +258,13 @@ class AresDeviceService:
     self._service_wrapper._command_methods[cmd_descriptor.name] = method
     self._service_wrapper._commands.append(cmd_descriptor)
 
-  def add_setting(self, setting_name: str, setting_value: Union[int, float, str, bool, bytes, list], optional: bool = True, constraints: Union[list[int], list[str], list[float]] = []):
+  def add_setting(self, setting_name: str, setting_value: Any, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = []):
     """
     Adds a new device setting to be reported to ARES when your devices capabilities are requested.
 
     Args:
       setting_name (str): The name of the setting.
-      setting_type (AresDataType): The type of this settings value.
+      setting_value (Any): The default value of the setting
       optional (bool): Whether the setting is optional
       constraints: An optional list of values to constrain the available setting choices. Can be integers, floats, or strings.
     """

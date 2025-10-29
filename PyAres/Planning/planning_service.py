@@ -9,6 +9,8 @@ from ares_datamodel.planning import planner_settings_pb2
 from ares_datamodel.planning import planner_service_capabilities_pb2
 from ares_datamodel.planning import plan_pb2
 from ares_datamodel import ares_data_schema_pb2
+from ares_datamodel import ares_data_type_pb2
+from ares_datamodel import ares_outcome_enum_pb2
 from ares_datamodel.connection import connection_state_pb2
 from ares_datamodel.connection import connection_info_pb2
 
@@ -31,14 +33,14 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
     A wrapper around the gRPC service to expose native Python objects for planning
     """
     def __init__(self, service_name: str, description: str, version: str, timeout: int, custom_plan_logic: PlanLogicFunction):
-        self._custom_plan_logic = custom_plan_logic
-        self._service_name = service_name
-        self._description = description
-        self._version = version
+        self._custom_plan_logic: PlanLogicFunction = custom_plan_logic
+        self._service_name: str = service_name
+        self._description: str = description
+        self._version: str = version
         self._settings: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
         self._planner_options: list[planner_pb2.Planner] = []
-        self._supported_types: list[ares_data_models.AresDataType] = []
-        self._timeout = timeout
+        self._supported_types: list[ares_data_type_pb2.AresDataType] = []
+        self._timeout: int = timeout
 
     def GetPlannerServiceCapabilities(self, request, context) -> planner_service_capabilities_pb2.PlannerServiceCapabilities:
         print("Capabilities Requested!")
@@ -52,7 +54,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         capabilities.available_planners.extend(self._planner_options)
 
         for(key, value) in self._settings.items():
-            settings_entry = capabilities.settings_schema.fields[key]
+            settings_entry: ares_data_schema_pb2.SchemaEntry = capabilities.settings_schema.fields[key]
             settings_entry.type = value.type
             settings_entry.optional - value.optional
 
@@ -76,20 +78,27 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
             return response
         
         except Exception as e:
+            response = connection_info_pb2.InfoResponse(
+                name="ERROR",
+                version="ERROR",
+                description="Error fetching information"
+            )
             print(f"Exception while trying to respond to ARES with information! {e}")
-    
+            return response
+
     def GetState(self, request, context) -> connection_state_pb2.StateResponse:
-        #This is wrong... fix
         try:
             return connection_state_pb2.StateResponse(state=connection_state_pb2.State.ACTIVE, state_message=f"{self._service_name} is active!")
         
         except Exception as e:
-            print(f"Exception while trying to respond to ARES with state! {e}")
+            print(f"{e}")
+            return connection_state_pb2.StateResponse(state=connection_state_pb2.State.ERROR, state_message=f"Exception while trying to respond to ARES with state! {e}")
+ 
 
     
     def GetConnectionStatus(self, request, context):
         try:
-            return connection_state_pb2.StateResponse(status=connection_state_pb2.State.ACTIVE, state_message=f"{self._service_name} is active!")
+            return connection_state_pb2.StateResponse(state=connection_state_pb2.State.ACTIVE, state_message=f"{self._service_name} is active!")
 
         except Exception as e:
             print(f"Exception while trying to respond to ARES with connection status! {e}")
@@ -112,7 +121,8 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
                     data_type=ares_data_type_utils.proto_ares_type_to_python_ares_type(proto_param.data_type),
                     is_planned=proto_param.is_planned,
                     is_result=proto_param.is_result,
-                    planner_name=proto_param.planner_name
+                    planner_name=proto_param.planner_name,
+                    initial_value=ares_value_utils.ares_value_to_py(proto_param.initial_value)
                 ))
         
         python_request = PlanRequest(parameters=parameters, 
@@ -121,6 +131,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
                                      session_id=request.session_id)
         
         #Handle call using the user's custom planning logic 
+        response_proto = plan_pb2.PlanningResponse()
         try:
             python_response = self._custom_plan_logic(python_request)
             if isinstance(python_response, Awaitable):
@@ -130,8 +141,15 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
             #Handle errors from user's logic
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error in custom planning logic: {e}")
+            response_proto.error_string = f"{e}"
+            response_proto.planning_outcome = ares_outcome_enum_pb2.FAILURE
+            return response_proto
         
-        response_proto = plan_pb2.PlanningResponse()
+        if not isinstance(python_response, PlanResponse):
+            response_proto.error_string = "The returned response from the user planning method was not a plan response, and thus was invalid."
+            response_proto.planning_outcome = ares_outcome_enum_pb2.FAILURE
+            return response_proto
+        
         response_proto.planning_outcome = ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome)
         response_proto.error_string = python_response.error_string
 

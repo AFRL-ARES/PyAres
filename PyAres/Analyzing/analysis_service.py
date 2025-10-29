@@ -13,6 +13,7 @@ from ares_datamodel.connection import connection_status_pb2
 from ares_datamodel.connection import connection_info_pb2
 from ares_datamodel import ares_data_type_pb2
 from ares_datamodel import ares_data_schema_pb2
+from ares_datamodel import ares_outcome_enum_pb2
 
 # Import Utilities
 from ..Utils import ares_struct_utils
@@ -48,7 +49,13 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             return response
 
         except Exception as e:
+            response = connection_info_pb2.InfoResponse(
+                name="ERROR",
+                version="ERROR",
+                description="Error fetching information"
+            )
             print(f"Exception while trying to respond to ARES with information! {e}")
+            return response
 
 
     def Analyze(self, request: analyzer_service.AnalysisRequest, context) -> analysis_pb2.Analysis:
@@ -59,10 +66,17 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
                 settings=ares_struct_utils.ares_struct_to_dict(request.settings)
             )
 
+            proto_analysis = analysis_pb2.Analysis()
             python_response = self._custom_analysis_logic(python_request)
             if isinstance(python_response, Awaitable):
                 python_response = python_response.__await__()
 
+            if not isinstance(python_response, Analysis):
+                print("Analysis response was an invalid type, ")
+                proto_analysis.analysis_outcome = ares_outcome_enum_pb2.FAILURE
+                proto_analysis.error_string = "The user's custom analysis logic returned an invalid type, analysis cannot be processed"
+                return proto_analysis
+            
             print("Sending Analysis Response.....")
             return analysis_pb2.Analysis(
                 result=python_response.result,
@@ -73,7 +87,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error in custom analysis logic: {e}")
-            return analysis_pb2.Analysis(success=False, analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome), error_string=str(e))
+            return analysis_pb2.Analysis(analysis_outcome=ares_outcome_enum_pb2.FAILURE, error_string=str(e))
         
     def GetState(self, request, context) -> connection_state_pb2.StateResponse:
         try:
@@ -81,7 +95,8 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             return analyzer_state
         
         except Exception as e:
-            print(f"Exception while trying to respond to ARES with state! {e}")
+            print(f"{e}")
+            return connection_state_pb2.StateResponse(state=connection_state_pb2.State.ERROR, state_message=f"Exception while trying to respond to ARES with state! {e}")
 
 
     def GetAnalysisParameters(self, request, context):
@@ -100,9 +115,8 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
 
     def GetAnalyzerCapabilities(self, request, context) -> analyzer_capabilities_pb2.AnalyzerCapabilities:
         print("Capabilities Requested!")
+        capabilities = analyzer_capabilities_pb2.AnalyzerCapabilities(timeout_seconds=self._timeout)
         try:
-            capabilities = analyzer_capabilities_pb2.AnalyzerCapabilities(timeout_seconds=self._timeout)
-
             for(key, value) in self._settings.items():
                 settings_entry = capabilities.settings_schema.fields[key]
                 settings_entry.type = value.type
@@ -118,7 +132,8 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
 
         except Exception as e:
             print(f"Exception while trying to respond to ARES capabilities request! {e}") 
-
+            return capabilities
+        
     def GetConnectionStatus(self, request, context):
         try:
             return connection_status_pb2.ConnectionStatus(status=connection_status_pb2.AresStatus.CONNECTED)

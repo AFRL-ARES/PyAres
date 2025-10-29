@@ -1,9 +1,6 @@
+from PyAres import AresDeviceService, DeviceCommandDescriptor, DeviceSchemaEntry, AresDataType
+from typing import Dict
 import time
-
-from PyAres import AresDeviceService
-from PyAres import DeviceCommandDescriptor
-from PyAres import DeviceSchemaEntry
-from PyAres import AresDataType
 
 class DemoDevice:
   # A simulated device. In reality, these communications would be happening with external hardware over serial, usb, etc.
@@ -18,7 +15,7 @@ class DemoDevice:
   def get_temperature(self):
     return { "temperature": self.temperature }
   
-  def get_device_state(self):
+  def get_device_state(self) -> Dict:
     state_dict = { "temperature": self.temperature }
     return state_dict
   

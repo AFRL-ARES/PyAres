@@ -43,7 +43,7 @@ def gradual_planner(param: PlanningParameter) -> float:
     if len(param.param_history) == 0:
       return param.minimum_value
     
-    previous_value = param.param_history[-1]
+    previous_value = param.param_history[-1].planned_value
     previous_value += 5
 
     if previous_value > param.maximum_value:

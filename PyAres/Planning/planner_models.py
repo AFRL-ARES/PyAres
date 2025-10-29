@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from ..Models import Outcome
+from ..Models import Outcome, AresDataType
 
 class ParameterHistoryItem:
     """ Represents a single historical parameter item """
@@ -22,14 +22,13 @@ class PlanningParameter:
     with planning parameters through.
     """
     def __init__(self, name: str, minimum_value: float, 
-                 maximum_value: float, param_history: list[ParameterHistoryItem], data_type: str, 
-                 is_planned: bool, is_result: bool, planner_name: str):
+                 maximum_value: float, param_history: list[ParameterHistoryItem], data_type: AresDataType, 
+                 is_planned: bool, is_result: bool, planner_name: str, initial_value = None):
         """
         Initializes a PlanningParameter.
 
         Args:
             name: The name or key associated with the parameter.
-            value: The value of the parameter.
             minimum_value: The minimum value the parameter is capable of being assigned.
             maximum_value: The maximum value the parameter is capable of being assigned.
             param_history: A list of historical planned and achieved values associated with the parameter.
@@ -37,6 +36,7 @@ class PlanningParameter:
             is_planned: A bool representing whether this parameter is designed to be planned for.
             is_result: A bool representing whether this parameter is the intended result of the experiment.
             planner_name: The name of the planner ARES requested be used to plan for this parameter.
+            initial_value: An optional initial value for the given parameter
         """
         self.name = name
         self.minimum_value = minimum_value
@@ -46,6 +46,7 @@ class PlanningParameter:
         self.is_planned = is_planned
         self.is_result = is_result
         self.planner_name = planner_name
+        self.initial_value = initial_value
 
 class PlanRequest:
     """
