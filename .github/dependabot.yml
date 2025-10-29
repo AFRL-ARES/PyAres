@@ -1,17 +1,17 @@
 version: 2
 updates:
-  - package-ecosystem: poetry
+  - package-ecosystem: "pip"
     directory: /
     schedule:
-      interval: weekly
+      interval: "weekly"
     groups:
       python-packages:
         patterns: 
           - "*"
-  - package-ecosystem: github-actions
+  - package-ecosystem: "github-actions"
     directory: /
     schedule:
-      interval: weekly
+      interval: "weekly"
     groups:
       github-actions:
         patterns: ["*"]
