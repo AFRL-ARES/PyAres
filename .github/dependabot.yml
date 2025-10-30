@@ -4,6 +4,8 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
+    security-updates: "auto"
+    versioning-strategy: "increase"
     groups:
       python-packages:
         patterns: 
