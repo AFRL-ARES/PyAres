@@ -3,9 +3,7 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-    security-updates: "auto"
-    versioning-strategy: "increase"
+      interval: "daily"
   - package-ecosystem: "github-actions"
     directory: /
     schedule:
