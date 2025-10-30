@@ -1,15 +1,11 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directory: /
+    directory: "/"
     schedule:
       interval: "weekly"
     security-updates: "auto"
     versioning-strategy: "increase"
-    groups:
-      python-packages:
-        patterns: 
-          - "*"
   - package-ecosystem: "github-actions"
     directory: /
     schedule:
