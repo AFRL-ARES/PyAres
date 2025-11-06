@@ -128,7 +128,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         python_request = PlanRequest(parameters=parameters, 
                                      settings=ares_struct_utils.ares_struct_to_dict(request.adapter_settings), 
                                      analysis_results=list(request.analysis_results),
-                                     session_id=request.session_id)
+                                     metadata=RequestMetadata(request.metadata))
         
         #Handle call using the user's custom planning logic 
         response_proto = plan_pb2.PlanningResponse()

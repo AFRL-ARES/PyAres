@@ -21,7 +21,7 @@ from ..Utils import ares_data_schema_utils
 from ..Utils import ares_outcome_utils
 
 # Import python models
-from ..Models import ares_data_models
+from ..Models import ares_data_models, RequestMetadata
 from .analyzer_models import AnalysisRequest, Analysis, InfoResponse
 
 # Type hints for the user's custom logic
@@ -63,7 +63,8 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
         try:
             python_request = AnalysisRequest(
                 inputs=ares_struct_utils.ares_struct_to_dict(request.inputs),
-                settings=ares_struct_utils.ares_struct_to_dict(request.settings)
+                settings=ares_struct_utils.ares_struct_to_dict(request.settings),
+                metadata=RequestMetadata(request.metadata)
             )
 
             proto_analysis = analysis_pb2.Analysis()

@@ -1,5 +1,5 @@
-from typing import Dict, Any
-from ..Models import Outcome, AresDataType
+from typing import Dict, Any, List
+from ..Models import Outcome, AresDataType, RequestMetadata
 
 class ParameterHistoryItem:
     """ Represents a single historical parameter item """
@@ -38,23 +38,23 @@ class PlanningParameter:
             planner_name: The name of the planner ARES requested be used to plan for this parameter.
             initial_value: An optional initial value for the given parameter
         """
-        self.name = name
-        self.minimum_value = minimum_value
-        self.maximum_value = maximum_value
-        self.param_history = param_history
-        self.data_type = data_type
-        self.is_planned = is_planned
-        self.is_result = is_result
-        self.planner_name = planner_name
+        self.name : str = name
+        self.minimum_value : float = minimum_value
+        self.maximum_value : float= maximum_value
+        self.param_history : List = param_history
+        self.data_type : AresDataType = data_type
+        self.is_planned : bool = is_planned
+        self.is_result : bool = is_result
+        self.planner_name : str = planner_name
         self.initial_value = initial_value
 
 class PlanRequest:
     """
     Represents a PlanRequest message received from ARES.
-
+    
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
-    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: list[float], session_id: str):
+    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: list[float], metadata: RequestMetadata):
         """
         Initializes a PlanRequest.
 
@@ -64,7 +64,7 @@ class PlanRequest:
         self.parameters = parameters
         self.settings = settings
         self.analysis_results = analysis_results
-        self.session_id = session_id
+        self.request_metadata = metadata
 
 
 class PlanResponse:

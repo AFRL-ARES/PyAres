@@ -1,12 +1,13 @@
 from typing import Dict, Any
-from ..Models import Outcome
+from ..Models import Outcome, RequestMetadata
 
 class AnalysisRequest:
     """ Represents an analysis request received from ARES. """
 
-    def __init__(self, inputs: Dict[str, Any], settings: Dict[str, Any]):
+    def __init__(self, inputs: Dict[str, Any], settings: Dict[str, Any], metadata: RequestMetadata):
         self.inputs = inputs
         self.settings = settings
+        self.request_metadata = metadata
 
 class Analysis:
     """ Represents the result of an analysis process. """
