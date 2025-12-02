@@ -31,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: pyares-release-dists
-          path: python/dist/
+          path: dist/
           if-no-files-found: error
   
   pypi-publish:
