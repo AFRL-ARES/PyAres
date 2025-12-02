@@ -46,7 +46,7 @@ jobs:
     
     steps:
       - name: Retrieve Release Distributions
-        uses: actions/download-artifacts@v4
+        uses: actions/download-artifact@v4
         with:
           name: pyares-release-dists
           path: dist/
