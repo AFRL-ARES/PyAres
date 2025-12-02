@@ -42,7 +42,7 @@ jobs:
       id-token: write
     environment:
       name: pypi
-      url: https://pypi.org/p/ares-datamodel
+      url: https://pypi.org/p/pyares
     
     steps:
       - name: Retrieve Release Distributions
