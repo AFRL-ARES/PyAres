@@ -177,7 +177,8 @@ class AresAnalyzerService:
                  description: str = "",
                  timeout: int = 30,
                  use_localhost: bool = True,
-                 port: int = 7083):
+                 port: int = 7083,
+                 max_message_size: int = -1):
         """
         Initializes the AresAnalyzerService.
 
@@ -190,11 +191,17 @@ class AresAnalyzerService:
             description (str): A brief description of your analyzer.
             use_localhost (bool): If true, binds to localhost. Otherwise, binds to [::].
             port (int): The port that your analyzer service will serve on. Defaults to port 7083.
+            max_message_size (int): The max size, in megabytes, of the messages your Analysis service is capable of sending. Increasing this can help transfer data like images, but may result in some loss in performance
         """
+
         self.info = InfoResponse(name=name, version=version, description=description)
         self._capabilities = analyzer_capabilities_pb2.AnalyzerCapabilities(settings_schema={})
         self._port = port
-        self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+        server_options = []
+        if max_message_size != -1:
+            print("Setting Custom Max Message Size")
+            server_options.append(('grpc.max_receive_message_length', max_message_size * 1024 * 1024))
+        self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10), options=server_options)
         self._service_wrapper = AresAnalyzerServiceWrapper(info=self.info, timeout=timeout, custom_analysis_logic=custom_analysis_logic)
         analyzer_service_grpc.add_AresRemoteAnalyzerServiceServicer_to_server(self._service_wrapper, self._server)
 

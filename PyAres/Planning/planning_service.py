@@ -166,19 +166,27 @@ class AresPlannerService:
     """
     Manages the gRPC server for the AresPlannerService
     """
-    def __init__(self, custom_plan_logic: PlanLogicFunction, service_name: str, service_description: str, service_version: str, timeout: int = 30, use_localhost: bool = True, port: int = 7082):
+    def __init__(self, custom_plan_logic: PlanLogicFunction, 
+                 service_name: str, 
+                 service_description: str, 
+                 service_version: str, 
+                 timeout: int = 30, 
+                 use_localhost: bool = True, 
+                 port: int = 7082,
+                 max_message_size: int = -1):
         """
         Initializes the AresPlannerService
 
         Args:
-            custom_plan_logic: A callable function that will be executed when a PlanRequest is received.
+            custom_plan_logic (PlanLogicFunction): A callable function that will be executed when a PlanRequest is received.
                 This function should accept a 'PyARES.AresPlanning.PlanRequest' object and return a
                 'PyARES.AresPlanning.PlanResponse' object (or an awaitable that resolves to one).
-            service_name: The name descriptor that is associated with your planner service.
-            service_description: A brief description describing your implementation of the planner service.
-            service_version: The version of your planner service.
-            use_localhost: An optional value that allows the user to specify whether to host the service on the local network. Defaults to True.
-            port: The port that your planner service will serve on. Defaults to port 7082.
+            service_name (str): The name descriptor that is associated with your planner service.
+            service_description (str): A brief description describing your implementation of the planner service.
+            service_version (str): The version of your planner service.
+            use_localhost (bool): An optional value that allows the user to specify whether to host the service on the local network. Defaults to True.
+            port (int): The port that your planner service will serve on. Defaults to port 7082.
+            max_message_size (int): The max size, in megabytes, of the messages your Planning service is capable of sending. Increasing this can help transfer heavy data like images, but may result in some loss in performance
         """
         #Public Values, designed to be accessible to the user
         self.service_name = service_name
@@ -187,7 +195,11 @@ class AresPlannerService:
 
         #Private values, mostly related to the service
         self._port = port
-        self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+        server_options = []
+        if max_message_size != -1:
+            print("Setting Custom Max Message Size")
+            server_options.append(('grpc.max_receive_message_length', max_message_size * 1024 * 1024))
+        self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10), options=server_options)
         self._service_wrapper = AresPlannerServiceWrapper(service_name, service_description, service_version, timeout, custom_plan_logic)
         planner_service_grpc.add_AresRemotePlannerServiceServicer_to_server(self._service_wrapper, self._server)
         if(use_localhost):
