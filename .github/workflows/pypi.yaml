@@ -16,7 +16,7 @@ jobs:
         working-directory: .
     
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
@@ -46,7 +46,7 @@ jobs:
     
     steps:
       - name: Retrieve Release Distributions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: pyares-release-dists
           path: dist/
