@@ -248,13 +248,21 @@ class AresPlannerService:
         """
         self._service_wrapper._timeout = new_timeout
 
-    def start(self):
+    def start(self, wait_for_termination: bool = True):
+        """ 
+        Starts the service on the specified port, and waits for termination. 
+        
+        Args:
+        wait_for_termination (bool): A boolean value that determines whether the start method will use the "wait_for_termination" blocking call. 
+        If true, the gRPC service will keep the main thread alive but at the cost of blocking any continued execution of your python logic.
+        Setting this value to false will allow you to continue execution after starting your service, however this should ONLY be done if you have
+        another mechanism for keeping your process alive (such as a GUI, or a loop). Defaults to true.
         """
-        Starts the service on the specified port, and waits for termination.
-        """
-        print(f"Starting Ares Planner Service on port {self._port}...")
+        print(f"Starting Ares Device Service on port {self._port}...")
         self._server.start()
-        self._server.wait_for_termination()
+
+        if wait_for_termination:
+            self._server.wait_for_termination()
 
     def stop(self):
         """
