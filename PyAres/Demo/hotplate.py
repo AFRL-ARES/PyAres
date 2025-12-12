@@ -1,4 +1,3 @@
-import time
 from PyAres import AresDeviceService, AresDataType, DeviceSchemaEntry, DeviceCommandDescriptor
 
 # --- PART 1: The Simulated Hardware ---

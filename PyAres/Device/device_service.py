@@ -23,8 +23,8 @@ from ..Utils import ares_data_type_utils
 
 # Type hint for the user's custom methods
 EnterSafeModeMethod = Callable[[], None]
-DeviceCommandMethod = Callable[..., Dict[str, any]]
-DeviceStateMethod = Callable[[], Dict[str, any]]
+DeviceCommandMethod = Callable[..., Dict[str, Any]]
+DeviceStateMethod = Callable[[], Dict[str, Any]]
 
 class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServicer):
   """
@@ -211,7 +211,14 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
 
 class AresDeviceService:
   """ Manages the gRPC service for the AresDeviceSerivce """
-  def __init__(self, enter_safe_mode_logic: EnterSafeModeMethod, get_device_state_logic: DeviceStateMethod, device_name: str, description: str, version: str, use_localhost: bool = True, port: int = 7100):
+  def __init__(self, 
+               enter_safe_mode_logic: EnterSafeModeMethod, 
+               get_device_state_logic: DeviceStateMethod, 
+               device_name: str,
+               description: str, 
+               version: str, 
+               use_localhost: bool = True, 
+               port: int = 7100):
     """
     Initializes the AresDeviceService
     
