@@ -1,18 +1,6 @@
-from typing import Union, Dict
-
-#Datamodel Imports
+from typing import Union
 from ares_datamodel import ares_data_schema_pb2
-
 from ..Models import ares_data_models
-# def ares_schema_to_dict(schema: ares_data_schema_pb2.AresDataSchema) -> dict:
-#     """Converts an AresDataSchemaSimplified to a dictionary for user logic."""
-#     result = {}
-#     for key, entry in schema.fields.items():
-#         result[key] = {
-#             "type": ares_data_schema_pb2.AresDataType.Name(entry.type),
-#             "is_array": entry.is_array
-#         }
-#     return result
 
 def create_settings_schema_entry(
     setting_type: ares_data_models.AresDataType, 
@@ -39,6 +27,10 @@ def create_settings_schema_entry(
         elif(all(isinstance(item, (int, float)) for item in choices)):
             schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional)
             schema_entry.number_choices.numbers.extend(choices)
+
+        else:
+            schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional)
+            
 
     return schema_entry
 

@@ -25,3 +25,9 @@ class RequestMetadata():
         self.campaign_name = proto_metadata.campaign_name
         self.campaign_id = proto_metadata.campaign_id
         self.experiment_id = proto_metadata.experiment_id  
+
+    @classmethod
+    def from_default_values(cls):
+        """ Alternative constructor for creating fake metadata """
+        default = request_metadata_pb2.RequestMetadata(system_name="TEST SYSTEM", campaign_name="TEST CAMPAIGN", campaign_id="TEST ID", experiment_id="TEST EXPERIMENT ID")
+        return cls(default)

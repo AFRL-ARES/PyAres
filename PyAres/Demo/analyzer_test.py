@@ -23,5 +23,7 @@ if __name__ == "__main__":
 
     #Add Analysis Parameters
     pythonDemoAnalyzer.add_analysis_parameter("Temperature", AresDataType.NUMBER)
+    pythonDemoAnalyzer.add_setting(setting_name="", setting_type=AresDataType.NULL, optional=True, constraints=[])
+    pythonDemoAnalyzer.start(wait_for_termination=True)
 
     pythonDemoAnalyzer.start()

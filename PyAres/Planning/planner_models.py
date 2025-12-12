@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Sequence
 from ..Models import Outcome, AresDataType, RequestMetadata
 
 class ParameterHistoryItem:
@@ -38,15 +38,33 @@ class PlanningParameter:
             planner_name: The name of the planner ARES requested be used to plan for this parameter.
             initial_value: An optional initial value for the given parameter
         """
-        self.name : str = name
-        self.minimum_value : float = minimum_value
-        self.maximum_value : float= maximum_value
-        self.param_history : List = param_history
-        self.data_type : AresDataType = data_type
-        self.is_planned : bool = is_planned
-        self.is_result : bool = is_result
-        self.planner_name : str = planner_name
+        self.name: str = name
+        self.minimum_value: float = minimum_value
+        self.maximum_value: float = maximum_value
+        self.param_history: List = param_history
+        self.data_type: AresDataType = data_type
+        self.is_planned: bool = is_planned
+        self.is_result: bool = is_result
+        self.planner_name: str = planner_name
         self.initial_value = initial_value
+
+
+class ParamHistoryInfo:
+    """
+    Represents the history of a given parameter.
+
+    Designed to provide a more user-friendly abstraction for interacting with a param history object.
+    """
+    def __init__(self, planned_value: Any, achieved_value: Any):
+        """
+        Initializes a ParamHistoryInfo.
+
+        Args:
+            planned_value (Any): The value given directly from the planner.
+            achieved_value (Any): An optional value that represents the real world achieved value, which may differ from the planners target value.
+        """
+        self.planned_value = planned_value
+        self.achieved_value = achieved_value
 
 class PlanRequest:
     """
@@ -54,7 +72,7 @@ class PlanRequest:
     
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
-    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: list[float], metadata: RequestMetadata):
+    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: Sequence[float], metadata: RequestMetadata = RequestMetadata.from_default_values()):
         """
         Initializes a PlanRequest.
 

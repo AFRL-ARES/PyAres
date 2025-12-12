@@ -1,10 +1,10 @@
 from ares_datamodel import ares_struct_pb2
-from typing import Union, Dict
+from typing import Union, Dict, Any
 
 from . import ares_value_utils
 import copy
 
-def ares_struct_to_dict(ares_struct: ares_struct_pb2.AresStruct) -> Dict[str, any]:
+def ares_struct_to_dict(ares_struct: ares_struct_pb2.AresStruct) -> Dict[str, Any]:
     """Converts an AresStruct protobuf message to a Python dictionary."""
     return {k: ares_value_utils.ares_value_to_py(v) for k, v in ares_struct.fields.items()}
 
@@ -62,6 +62,9 @@ def create_bool_struct(key: str, value: bool) -> ares_struct_pb2.AresStruct:
     Returns:
         (AresStruct): A new AresStruct containing the provided key and value.
     """
+    new_struct = ares_struct_pb2.AresStruct()
+    new_struct.fields[key] = ares_value_utils.create_bool(value)
+    return new_struct
 
 def create_null_struct(key: str) -> ares_struct_pb2.AresStruct:
     """
@@ -168,7 +171,16 @@ def copy_struct(existing_struct: ares_struct_pb2.AresStruct) -> ares_struct_pb2.
     """
     return copy.deepcopy(existing_struct)
 
-def create_ares_struct(key: str, value: any):
+def create_empty_struct() -> ares_struct_pb2.AresStruct:
+    """
+    Creates a new empty AresStruct
+    
+    Returns:
+        (AresStruct): The newly created empty AresStruct.
+    """
+    return ares_struct_pb2.AresStruct()
+
+def create_ares_struct(key: str, value: Any):
     """
     Creates a new AresStruct using the provided key and value.
 
@@ -181,28 +193,32 @@ def create_ares_struct(key: str, value: any):
     """
 
     if(isinstance(value, str)):
-        return create_string_struct(value)
+        return create_string_struct(key, value)
     
     elif(isinstance(value, (int, float))):
-        return create_number_struct(value)
+        return create_number_struct(key, value)
     
     elif(isinstance(value, bool)):
-        return create_bool_struct(value)
-    
-    elif(isinstance(value, (list[int], list[float]))):
-        return create_number_array_struct(value)
+        return create_bool_struct(key, value)
     
     elif(isinstance(value, bytes)):
-        return create_bytes_array_struct(value)
+        return create_bytes_array_struct(key, value)
     
-    elif(isinstance(value, list[str])):
-        return create_string_array_struct(value)
-    
-    elif(isinstance(value, list[bool])):
-        return create_bool_array_struct(value)
+    elif(isinstance(value, list)):
+        if(len(value) == 0):
+            return create_null_struct(key)
+
+        elif(all(isinstance(item, str) for item in value)):
+            return create_string_array_struct(key, value)
+        
+        elif(all(isinstance(item, (float, int)) for item in value)):
+            return create_number_array_struct(key, value)
+        
+        elif(all(isinstance(item, bool) for item in value)):
+            return create_bool_array_struct(key, value)
     
     else:
-        return create_null_struct()
+        return create_null_struct(key)
 
     
 
