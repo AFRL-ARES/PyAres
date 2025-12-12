@@ -146,5 +146,7 @@ The central component to your PyAres device is your AresDeviceService. This clas
 ### 📄 License
 
 The PyAres project is licensed under the MIT License - see details in [LICENSE.txt]([https://github.com/AFRL-ARES/PyAres/blob/Develop/LICENSE.txt](https://github.com/AFRL-ARES/PyAres/blob/Develop/LICENSE)) <br></br>
-PyAres has been cleared for release under clearance number AFRL-2025-5332.
+
+### CLEARANCE
+Distribution A. Approved for public release: distribution unlimited. AFRL-2025-5332.
 
