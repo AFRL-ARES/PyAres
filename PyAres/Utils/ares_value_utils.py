@@ -1,8 +1,7 @@
 from ares_datamodel import ares_struct_pb2
 from ares_datamodel import ares_data_type_pb2
-from typing import Union
+from typing import Union, Any
 
-from . import ares_struct_utils
 from . import ares_data_type_utils
 from ..Models import AresDataType 
 
@@ -33,14 +32,13 @@ def py_to_ares_value(py_value, ares_value: ares_struct_pb2.AresValue):
         ares_value.number_value = py_value
     elif isinstance(py_value, bytes):
         ares_value.bytes_value = py_value
-    elif isinstance(py_value, dict):
-        ares_struct_utils.dict_to_ares_struct(py_value, ares_value.struct_value)
     elif isinstance(py_value, list):
-        for item in py_value:
-            new_val = ares_value.list_value.values.add()
-            py_to_ares_value(item, new_val)
-    elif py_value is None:
-        ares_value.null_value = 0  # google.protobuf.NullValue.NULL_VALUE
+        if(all(isinstance(x, str) for x in py_value)):
+            ares_value.string_array_value.strings.extend(py_value)
+        elif(all(isinstance(x, (int, float)) for x in py_value)):
+            ares_value.number_array_value.numbers.extend(py_value)
+        elif(all(isinstance(x, bool) for x in py_value)):
+            ares_value.bool_array_value.bools.extend(py_value)
     else:
         raise TypeError(f"Unsupported type for AresValue: {type(py_value)}")
 
@@ -137,7 +135,9 @@ def create_bool_array(value: list[bool]) -> ares_struct_pb2.AresValue:
     Returns:
         (AresValue): A new AresValue containing the provided list of booleans.
     """
-    return ares_struct_pb2.AresValue(bool_array_value=value)
+    ares_value = ares_struct_pb2.AresValue()
+    ares_value.bool_array_value.bools.extend(value)
+    return ares_value
 
 def create_default(python_datatype: AresDataType) -> ares_struct_pb2.AresValue:
     """
@@ -177,7 +177,7 @@ def create_default(python_datatype: AresDataType) -> ares_struct_pb2.AresValue:
     else:
         return create_null()
     
-def create_ares_value(value: any) -> ares_struct_pb2.AresValue:
+def create_ares_value(value: Any) -> ares_struct_pb2.AresValue:
     """
     Creates a new AresValue using the provided value.
     If the provided value is not valid for use in an AresValue, a null AresValue is returned.
@@ -198,7 +198,7 @@ def create_ares_value(value: any) -> ares_struct_pb2.AresValue:
         return create_bool(value)
     
     elif(isinstance(value, bytes)):
-        return create_bool_array(value)
+        return create_bytes(value)
     
     elif(isinstance(value, list)):
         if all(isinstance(x, (int, float)) for x in value):
@@ -209,6 +209,9 @@ def create_ares_value(value: any) -> ares_struct_pb2.AresValue:
         
         elif all(isinstance(x, bool) for x in value):
             return create_bool_array(value)
-    
+        
+        else:
+            return create_null()
+        
     else:
         return create_null()

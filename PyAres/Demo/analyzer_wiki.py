@@ -6,7 +6,7 @@ def analyze_sample(request: AnalysisRequest) -> Analysis:
     raw_value = request.inputs.get("Growth_Metric")
 
     if raw_value is None:
-        return Analysis(result=0.0, Outcome = Outcome.FAILURE)
+        return Analysis(result=0.0, outcome=Outcome.FAILURE)
     
     # 2. Perform Logic
     print(f"Analyzing sample with value: {raw_value}")
