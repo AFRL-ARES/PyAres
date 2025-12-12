@@ -11,7 +11,7 @@ include = ["PyAres*"]
 
 [project]
 name = "PyAres"
-version = "0.1.5"
+version = "0.2.0"
 authors = [{ name = "AFRL", email = "AFRL.RX.AREScontact@us.af.mil" }]
 description = "The official Python library for ARES."
 license = "MIT"
