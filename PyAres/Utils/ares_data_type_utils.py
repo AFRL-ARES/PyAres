@@ -1,10 +1,11 @@
-from typing import Union
+from typing import Union, cast
 from ares_datamodel import ares_data_type_pb2
 from ..Models import AresDataType
 
 def python_ares_type_to_proto_ares_type(py_value: AresDataType) -> ares_data_type_pb2.AresDataType:
   """ A method to convert from the python AresDataType class to the protobuf version """
-  return ares_data_type_pb2.AresDataType(py_value.value)
+  val = cast(ares_data_type_pb2.AresDataType, py_value.value)
+  return val
 
 def proto_ares_type_to_python_ares_type(proto_value: ares_data_type_pb2.AresDataType) -> AresDataType:
   """ A method to convert from the protobuf AresDataType class to the python version """
