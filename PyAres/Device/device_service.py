@@ -128,8 +128,7 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
     try:
       for key, value in self._current_settings.items():
         new_entry = response.settings.fields[key]
-        new_ares_value = ares_value_utils.create_ares_value(value)
-        new_entry.CopyFrom(new_ares_value)
+        new_entry.CopyFrom(value)
 
       return response
     
@@ -138,7 +137,10 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       return response
   
   def SetSettings(self, request: device_service.SetSettingsRequest, context) -> empty_pb2.Empty:
-    self._current_settings = ares_struct_utils.ares_struct_to_dict(request.settings)
+    for key, value in request.settings.fields.items():
+      if key in self._current_settings:
+        self._current_settings[key] = value
+
     return empty_pb2.Empty()
   
   def GetStateSchema(self, request, context) -> device_service.StateSchemaResponse:
@@ -181,6 +183,10 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       if polling_info.polling_type == device_polling_settings_pb2.PollingType.INTERVAL:
         delay = polling_info.interval_ms/1000
         while True:
+          if context.is_active() == False:
+            print("Client for ARES device has disconnected.")
+            break
+          
           response = self._update_device_state()
           if isinstance(response, Awaitable):
             response = response.__await__()
@@ -195,11 +201,6 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
             ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
 
           yield proto_response
-
-          if context.is_active() == False:
-            print("Client for ARES device has disconnected.")
-            break
-
           time.sleep(delay)
       
       else:
@@ -279,6 +280,7 @@ class AresDeviceService:
     self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints)
     new_ares_value = ares_value_utils.create_ares_value(setting_value)
     self._service_wrapper._current_settings[setting_name] = new_ares_value
+    print(f"I JUST ADDED THE NEW SETTING WOOHOOOOO {self._service_wrapper._current_settings[setting_name].number_value}")
 
   def start(self, wait_for_termination: bool = True):
     """ 

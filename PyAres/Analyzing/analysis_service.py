@@ -145,13 +145,14 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
     def ValidateInputs(self, request: analyzer_service.ParameterValidationRequest, context): 
         print("Validating Inputs")
         response = analyzer_service.ParameterValidationResult(success=True)
-        provided_params: Mapping[str, ares_data_type_pb2.AresDataType] = request.input_schema.fields
+        provided_params: Mapping[str, ares_data_schema_pb2.SchemaEntry] = request.input_schema.fields
 
         for stored_key, stored_schema in self._analysis_parameters.items():
+            print(f"LOOKING AT {stored_key}")
             if stored_key in provided_params:
-                matching_schema = provided_params.get(stored_key)
-                
-                if stored_schema.type != matching_schema:
+                matching_schema = provided_params[stored_key]
+                if stored_schema.type != matching_schema.type:
+                    print(f" THIS IS THE TYPE RIGHT HERE LOOK AT IT: {type(matching_schema)}")
                     message = f"Schema Mismatch! {stored_key} was provided with the value type {stored_schema.type}, but the value type {matching_schema} was expected!"
                     response.messages.append(message)
                     print(message)
@@ -161,7 +162,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
                     response.messages.append(message)
                     print(message)
 
-        if response.messages.count != 0:
+        if len(response.messages) != 0:
             response.success = False
 
         return response

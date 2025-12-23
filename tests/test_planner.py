@@ -3,7 +3,7 @@ from PyAres import AresPlannerService, AresDataType, PlanRequest, PlanResponse, 
 from ares_datamodel.planning import plan_pb2
 from ares_datamodel import ares_data_type_pb2
 from PyAres.Utils import ares_value_utils, ares_struct_utils
-from typing import Optional
+from .mock_grpc_context import MockGrpcContext
 
 class TestAresPlannerService(unittest.TestCase):
   def setUp(self):
@@ -100,6 +100,40 @@ class TestAresPlannerService(unittest.TestCase):
     self.assertIsInstance(response, plan_pb2.PlanningResponse)
     self.assertEqual(parameter_names, ["test_param"])
     self.assertEqual(parameter_values, [1.0])
+
+
+  def test_error_handling(self):
+    """Test that exceptions in user code are caught and reported to gRPC context."""
+
+    # 1. Define a function that CRASHES
+    def failing_plan(request: PlanRequest) -> PlanResponse:
+        raise ValueError("Something went wrong in the user calculation!")
+
+    # 2. Initialize service with the failing function
+    self.service = AresPlannerService(failing_plan, self.planner_name, self.planner_desc, self.planner_version, port=0)
+
+    # 3. Create the Mock Context
+    mock_context = MockGrpcContext()
+    mock_request = plan_pb2.PlanningRequest()
+
+    # 4. Execute
+    # We wrap this in try/except because our MockContext.abort() raises an exception
+    # (simulating real gRPC behavior)
+    try:
+        self.service._service_wrapper.Plan(mock_request, mock_context)
+    except Exception as e:
+        # We expect the abort exception here
+        pass
+
+    # 5. Assertions
+    # Verify that the wrapper actually reported the error to the context
+    self.assertIsNotNone(mock_context._code, "The service did not set an error code on the context.")
+
+    # Verify the details contain the user's error message
+    self.assertIn("Something went wrong", mock_context._details)
+
+    # Optional: specific status check (depends on how you import grpc)
+    # self.assertEqual(mock_context._code, grpc.StatusCode.INTERNAL)
 
 if __name__ == '__main__':
   unittest.main(verbosity=2)
