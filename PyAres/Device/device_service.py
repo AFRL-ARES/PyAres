@@ -280,7 +280,6 @@ class AresDeviceService:
     self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints)
     new_ares_value = ares_value_utils.create_ares_value(setting_value)
     self._service_wrapper._current_settings[setting_name] = new_ares_value
-    print(f"I JUST ADDED THE NEW SETTING WOOHOOOOO {self._service_wrapper._current_settings[setting_name].number_value}")
 
   def start(self, wait_for_termination: bool = True):
     """ 

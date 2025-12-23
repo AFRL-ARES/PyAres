@@ -1,27 +1,32 @@
 [build-system]
-requires = [
-	"setuptools>=61.0.0", 
-	"wheel",
-	"googleapis-common-protos>=1.70.0"
-	]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-include = ["PyAres*"]
+requires = ["hatchling", "googleapis-common-protos>=1.70.0"]
+build-backend = "hatchling.build"
 
 [project]
 name = "PyAres"
-version = "0.2.1"
-authors = [{ name = "AFRL", email = "AFRL.RX.AREScontact@us.af.mil" }]
+dynamic = ["version"]
 description = "The official Python library for ARES."
-license = "MIT"
+readme = "README.md"
 requires-python = ">= 3.10"
+license = { text = "MIT" }
+authors = [{ name = "AFRL", email = "AFRL.RX.AREScontact@us.af.mil" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
 
 dependencies = [
-  "grpcio-tools (>=1.75.1)",
-  "grpcio (>=1.71.0,<2.0.0)",
-  "ares-datamodel (>=0.15.1b1)",
+    "grpcio-tools >= 1.75.1",
+    "grpcio >= 1.71.0, < 2.0.0",
+    "ares-datamodel >= 0.15.1b1",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/AFRL-ARES"
+Homepage = "https://github.com/AFRL-ARES"
+
+[tool.hatch.version]
+source = "env"
+variable = "PYARES_PACKAGE_VERSION"
+
+[tool.hatch.build.targets.wheel]
+packages = ["PyAres"]
