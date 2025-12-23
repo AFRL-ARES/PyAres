@@ -1,24 +1,17 @@
 import unittest
 from typing import Dict, Any
-
-# Import Service
 from PyAres import AresDeviceService, DeviceSchemaEntry, AresDataType
 from PyAres.Device.device_models import DeviceCommandDescriptor
-
-# Import Protobufs
 from ares_datamodel.device.remote import ares_remote_device_service_pb2 as device_service
 from ares_datamodel.device import device_polling_settings_pb2
 from ares_datamodel import ares_data_type_pb2
-
-# Import Utils
 from PyAres.Utils import ares_value_utils, ares_struct_utils, ares_data_schema_utils
 
-# --- Mock Context with Streaming Support ---
 class MockGrpcContext:
     def __init__(self):
         self._code = None
         self._details = ""
-        self._active_count = 3 # Allow loop to run 3 times by default
+        self._active_count = 3
 
     def set_code(self, code):
         self._code = code
@@ -32,7 +25,6 @@ class MockGrpcContext:
         raise Exception(f"gRPC Abort: {code} - {details}")
 
     def is_active(self):
-        # Simulate a client disconnecting after a few iterations
         if self._active_count > 0:
             self._active_count -= 1
             return True
@@ -79,22 +71,16 @@ class TestAresDeviceService(unittest.TestCase):
         """Test adding, retrieving schema, getting values, and setting values."""
         self.service = AresDeviceService(self.enter_safe_mode_func, self.get_state_func, self.device_name, self.device_desc, self.device_version, port=0)
 
-        # Add Setting
         self.service.add_setting("TargetTemp", 100.0, optional=False)
         
-        # Verify Schema
         schema_resp = self.service._service_wrapper.GetSettingsSchema(None, None)
         self.assertIn("TargetTemp", schema_resp.schema.fields)
         self.assertEqual(schema_resp.schema.fields["TargetTemp"].type, ares_data_type_pb2.AresDataType.NUMBER)
 
-        # Verify Current Value
         curr_resp = self.service._service_wrapper.GetCurrentSettings(None, None)
-        # Assuming AresValue is wrapped in a struct, we check the field
-        # Note: Depending on your utils, you might need to decode the AresValue
         val_proto = curr_resp.settings.fields["TargetTemp"]
         self.assertEqual(val_proto.number_value, 100.0)
 
-        # Set New Value (Simulate Client Request)
         set_req = device_service.SetSettingsRequest()
         ares_struct_utils.add_value_to_struct(set_req.settings, "TargetTemp", ares_value_utils.create_ares_value(150.0))
         
@@ -110,18 +96,15 @@ class TestAresDeviceService(unittest.TestCase):
         def move_axis(axis: str, speed: float) -> Dict[str, Any]:
             return {"moved": True, "axis": axis, "final_speed": speed}
 
-        # Define and register the command
         axis_param_schema = DeviceSchemaEntry(AresDataType.STRING, "The choosen axis to move on", "N/A")
         speed_param_schema = DeviceSchemaEntry(AresDataType.NUMBER, "The speed at which the axis moves", "Speed")
         input_schema = { "axis": axis_param_schema, "speed": speed_param_schema }
         descriptor = DeviceCommandDescriptor("Move Axis", "Moves an axis", input_schema=input_schema, output_schema={})
         self.service.add_new_command(descriptor, move_axis)
 
-        # --- TEST EXECUTION (Happy Path) ---
         req = device_service.ExecuteCommandRequest()
         req.command_name = "Move Axis"
         
-        # Add Arguments
         ares_struct_utils.add_value_to_struct(req.arguments, "axis", ares_value_utils.create_ares_value("X"))
         ares_struct_utils.add_value_to_struct(req.arguments, "speed", ares_value_utils.create_ares_value(50.0))
 
@@ -141,15 +124,14 @@ class TestAresDeviceService(unittest.TestCase):
         desc = DeviceCommandDescriptor("Simple", "Simple Description", {"arg1": DeviceSchemaEntry(AresDataType.NULL)}, {})
         self.service.add_new_command(desc, simple_cmd)
 
-        # 1. Unknown Command
+        # Unknown Command
         req_unknown = device_service.ExecuteCommandRequest(command_name="UnknownCmd")
         resp = self.service._service_wrapper.ExecuteCommand(req_unknown, None)
         self.assertFalse(resp.success)
         self.assertIn("Unable to find requested command", resp.error)
 
-        # 2. Argument Count Mismatch
+        # Argument Count Mismatch
         req_mismatch = device_service.ExecuteCommandRequest(command_name="Simple")
-        # Sending 0 args, expects 1
         resp_mis = self.service._service_wrapper.ExecuteCommand(req_mismatch, None)
         self.assertFalse(resp_mis.success)
         self.assertIn("parameter count did not match", resp_mis.error)
@@ -163,17 +145,13 @@ class TestAresDeviceService(unittest.TestCase):
         req.polling_settings.polling_type = device_polling_settings_pb2.PollingType.INTERVAL
         req.polling_settings.interval_ms = 10 # Short interval for fast test
 
-        # Setup Mock Context to kill loop after 3 iterations
         mock_context = MockGrpcContext()
         mock_context._active_count = 3
 
-        # Call the generator
         response_generator = self.service._service_wrapper.GetStateStream(req, mock_context)
 
-        # Collect results
         responses = list(response_generator)
 
-        # Assertions
         self.assertEqual(len(responses), 3, "Should have yielded exactly 3 responses before context became inactive")
         
         first_resp = responses[0]
