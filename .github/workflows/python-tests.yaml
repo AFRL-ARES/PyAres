@@ -3,10 +3,10 @@ name: PyAres Unit Tests
 on:
   push:
     branches:
-      - main
+      - Develop
   pull_request:
     branches:
-      - main
+      - Develop
 
 jobs:
   build-and-test:
