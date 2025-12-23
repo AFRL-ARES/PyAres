@@ -41,7 +41,7 @@ class PlanningParameter:
         self.name: str = name
         self.minimum_value: float = minimum_value
         self.maximum_value: float = maximum_value
-        self.param_history: List = param_history
+        self.param_history: List[ParameterHistoryItem] = param_history
         self.data_type: AresDataType = data_type
         self.is_planned: bool = is_planned
         self.is_result: bool = is_result

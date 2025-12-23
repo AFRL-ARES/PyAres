@@ -56,7 +56,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         for(key, value) in self._settings.items():
             settings_entry: ares_data_schema_pb2.SchemaEntry = capabilities.settings_schema.fields[key]
             settings_entry.type = value.type
-            settings_entry.optional - value.optional
+            settings_entry.optional = value.optional
 
             if len(value.string_choices.strings) != 0:
                 settings_entry.string_choices.strings.extend(value.string_choices.strings)
@@ -269,4 +269,4 @@ class AresPlannerService:
         Stops the service, terminating the connection.
         """
         print("Stopping Ares Planning Service...")
-        self._server.stop(0).wait()       
+        self._server.stop(0).wait()
