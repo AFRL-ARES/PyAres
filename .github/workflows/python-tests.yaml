@@ -25,6 +25,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Set PyARES Package Name From Tag
+      run: echo "PYARES_PACKAGE_VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
+
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
