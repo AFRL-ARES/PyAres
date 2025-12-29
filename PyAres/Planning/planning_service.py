@@ -258,7 +258,7 @@ class AresPlannerService:
         Setting this value to false will allow you to continue execution after starting your service, however this should ONLY be done if you have
         another mechanism for keeping your process alive (such as a GUI, or a loop). Defaults to true.
         """
-        print(f"Starting Ares Device Service on port {self._port}...")
+        print(f"Starting Ares Planning Service on port {self._port}...")
         self._server.start()
 
         if wait_for_termination:
