@@ -110,21 +110,6 @@ def create_number_array_struct(key: str, value: list[Union[int, float]]) -> ares
     new_struct.fields[key] = ares_value_utils.create_number_array(value)
     return new_struct
 
-def create_bool_array_struct(key: str, value: list[bool]) -> ares_struct_pb2.AresStruct:
-    """
-    Creates a new AresStruct with a bool array initialized using the provided key and value.
-
-    Args:
-        key (str): The associated key to be used when storing the given value.
-        value (list[bool]): The list of bools to be stored in the new AresStruct.
-
-    Returns:
-        (AresStruct): A new AresStruct containing the provided key and value
-    """
-    new_struct = ares_struct_pb2.AresStruct()
-    new_struct.fields[key] = ares_value_utils.create_bool_array(value)
-    return new_struct
-
 def create_bytes_array_struct(key: str, value: bytes) -> ares_struct_pb2.AresStruct:
     """
     Creates a new AresStruct with a byte array initialized using the provided key and value.
@@ -215,10 +200,11 @@ def create_ares_struct(key: str, value: Any):
             return create_number_array_struct(key, value)
         
         elif(all(isinstance(item, bool) for item in value)):
-            return create_bool_array_struct(key, value)
+            new_struct = ares_struct_pb2.AresStruct()
+            new_struct.fields[key].CopyFrom(ares_value_utils.create_array(value))
+            return new_struct
     
     else:
         return create_null_struct(key)
 
     
-

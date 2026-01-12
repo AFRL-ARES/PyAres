@@ -9,8 +9,9 @@ class AresDataType(Enum):
     NUMBER = 4
     STRING_ARRAY = 5
     NUMBER_ARRAY = 6
-    BYTE_ARRAY = 7
-    BOOL_ARRAY = 8
+    LIST = 7
+    STRUCT = 8
+    BYTE_ARRAY = 9
 
 class Outcome(Enum):
     UNSPECIFIED_OUTCOME = 0

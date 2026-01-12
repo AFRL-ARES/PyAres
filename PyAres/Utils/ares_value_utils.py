@@ -1,6 +1,6 @@
 from ares_datamodel import ares_struct_pb2
 from ares_datamodel import ares_data_type_pb2
-from typing import Union, Any
+from typing import Union, Any, Dict
 
 from . import ares_data_type_utils
 from ..Models import AresDataType 
@@ -37,8 +37,9 @@ def py_to_ares_value(py_value, ares_value: ares_struct_pb2.AresValue):
             ares_value.string_array_value.strings.extend(py_value)
         elif(all(isinstance(x, (int, float)) for x in py_value)):
             ares_value.number_array_value.numbers.extend(py_value)
-        elif(all(isinstance(x, bool) for x in py_value)):
-            ares_value.bool_array_value.bools.extend(py_value)
+        else:
+            for item in py_value:
+                ares_value.list_value.values.append(create_ares_value(item))
     else:
         raise TypeError(f"Unsupported type for AresValue: {type(py_value)}")
 
@@ -125,18 +126,39 @@ def create_bytes(value: bytes) -> ares_struct_pb2.AresValue:
     """
     return ares_struct_pb2.AresValue(bytes_value=value)
 
-def create_bool_array(value: list[bool]) -> ares_struct_pb2.AresValue:
+def create_array(values: list[Any]) -> ares_struct_pb2.AresValue:
     """
-    Creates a new AresValue, initialized to the provided list of booleans.
+    Creates a new AresValue, initialized to the provided list of AresValues.
 
     Args:
-        value (list[bool]): The list of booleans to be stored in the new AresValue.
+        value (list[Any]): The list of values to be stored in the new AresValue.
 
     Returns:
-        (AresValue): A new AresValue containing the provided list of booleans.
+        (AresValue): A new AresValue containing the provided list of values.
     """
     ares_value = ares_struct_pb2.AresValue()
-    ares_value.bool_array_value.bools.extend(value)
+    for item in values:
+        ares_value.list_value.values.append(create_ares_value(item))
+
+    return ares_value
+
+def create_struct(values: Dict) -> ares_struct_pb2.AresValue:
+    """
+    Creates a new AresValue, initialized with an AresStruct.
+
+    Args:
+        value (Dict): The dictionary of values to be added to the AresStruct.
+
+    Returns:
+        (AresValue): A new AresValue containing the provided dictionaries values in an AresStruct.
+    """
+    ares_value = ares_struct_pb2.AresValue()
+    
+    for key, value in values.items():
+        new_entry = ares_value.struct_value.fields[key]
+        new_entry.CopyFrom(create_ares_value(value))
+ 
+
     return ares_value
 
 def create_default(python_datatype: AresDataType) -> ares_struct_pb2.AresValue:
@@ -169,11 +191,14 @@ def create_default(python_datatype: AresDataType) -> ares_struct_pb2.AresValue:
     elif(dataType == ares_data_type_pb2.AresDataType.NUMBER_ARRAY):
         return create_number_array([])
     
-    elif(dataType == ares_data_type_pb2.AresDataType.BOOL_ARRAY):
-        return create_bool_array([])
+    elif(dataType == ares_data_type_pb2.AresDataType.LIST):
+        return create_array([])
     
     elif(dataType == ares_data_type_pb2.AresDataType.BYTE_ARRAY):
         return create_bytes(bytes())
+    
+    elif(dataType == ares_data_type_pb2.AresDataType.STRUCT):
+        return create_struct({})
     else:
         return create_null()
     
@@ -191,27 +216,30 @@ def create_ares_value(value: Any) -> ares_struct_pb2.AresValue:
     if(isinstance(value, str)):
         return create_string(value)
     
-    elif(isinstance(value, (int, float))):
-        return create_number(value)
-    
     elif(isinstance(value, bool)):
         return create_bool(value)
+
+    elif(isinstance(value, (int, float))):
+        return create_number(value)
     
     elif(isinstance(value, bytes)):
         return create_bytes(value)
     
     elif(isinstance(value, list)):
-        if all(isinstance(x, (int, float)) for x in value):
+        if all(isinstance(x, bool) for x in value):
+            return create_array(value)
+        
+        elif all(isinstance(x, (int, float)) for x in value):
             return create_number_array(value)
         
         elif all(isinstance(x, str) for x in value):
             return create_string_array(value)
         
-        elif all(isinstance(x, bool) for x in value):
-            return create_bool_array(value)
-        
         else:
-            return create_null()
+            return create_array(value)
+        
+    elif(isinstance(value, Dict)):
+        return create_struct(value)
         
     else:
         return create_null()
