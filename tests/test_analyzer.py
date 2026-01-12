@@ -71,14 +71,31 @@ class TestAresAnalyzerService(unittest.TestCase):
         # Add an Input Parameter (e.g., 'Image')
         self.service.add_analysis_parameter("InputImage", ares_data_models.AresDataType.STRING, optional=False)
 
+        # Add a Struct Setting
+        nested_schema = {
+            "SubField": ares_data_models.AresSchemaEntry(
+                type=ares_data_models.AresDataType.STRING,
+                description="A nested field"
+            )
+        }
+        self.service.add_setting("Complex Setting", ares_data_models.AresDataType.STRUCT, optional=True, struct_schema=nested_schema)
+
         # Verify internal storage
         self.assertIn("Threshold", self.service._service_wrapper._settings)
         self.assertIn("InputImage", self.service._service_wrapper._analysis_parameters)
+        self.assertIn("Complex Setting", self.service._service_wrapper._settings)
 
         # Verify capabilities response
         caps = self.service._service_wrapper.GetAnalyzerCapabilities(None, None)
         self.assertIn("Threshold", caps.settings_schema.fields)
         self.assertEqual(caps.settings_schema.fields["Threshold"].type, ares_data_type_pb2.AresDataType.NUMBER)
+
+        # Verify Struct in response
+        self.assertIn("Complex Setting", caps.settings_schema.fields)
+        complex_field = caps.settings_schema.fields["Complex Setting"]
+        self.assertEqual(complex_field.type, ares_data_type_pb2.AresDataType.STRUCT)
+        self.assertIn("SubField", complex_field.struct_schema.fields)
+        self.assertEqual(complex_field.struct_schema.fields["SubField"].type, ares_data_type_pb2.AresDataType.STRING)
 
     def test_validation_logic(self):
         """Test that the service correctly validates incoming input schemas."""

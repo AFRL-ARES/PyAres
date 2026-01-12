@@ -1,5 +1,7 @@
 from ares_datamodel import request_metadata_pb2
 from enum import Enum
+from dataclasses import dataclass, field
+from typing import Union, List, Optional, Dict
 
 class AresDataType(Enum):
     UNKNOWN = 0
@@ -32,3 +34,12 @@ class RequestMetadata():
         """ Alternative constructor for creating fake metadata """
         default = request_metadata_pb2.RequestMetadata(system_name="TEST SYSTEM", campaign_name="TEST CAMPAIGN", campaign_id="TEST ID", experiment_id="TEST EXPERIMENT ID")
         return cls(default)
+
+@dataclass
+class AresSchemaEntry:
+    type: AresDataType
+    optional: bool = False
+    description: str = ""
+    unit: str = ""
+    choices: Union[List[str], List[int], List[float]] = field(default_factory=list)
+    struct_schema: Optional[Dict[str, 'AresSchemaEntry']] = None
