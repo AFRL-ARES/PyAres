@@ -18,7 +18,7 @@ classifiers = [
 dependencies = [
     "grpcio-tools >= 1.75.1",
     "grpcio >= 1.71.0, < 2.0.0",
-    "ares-datamodel >= 0.15.1b1",
+    "ares-datamodel >= 0.16.0",
 ]
 
 [project.urls]
