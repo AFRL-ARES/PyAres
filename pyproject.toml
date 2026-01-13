@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/AFRL-ARES"
+Homepage = "https://github.com/AFRL-ARES/PyAres"
 
 [tool.hatch.version]
 source = "env"
