@@ -23,7 +23,9 @@ def determine_python_ares_data_type(value: Union[int, float, str, bool, list]):
     case float():
       return AresDataType.NUMBER
     case list():
-      if(all(isinstance(x, str) for x in value)):
+      if(all(isinstance(x, bool) for x in value)):
+        return AresDataType.LIST
+      elif(all(isinstance(x, str) for x in value)):
         return AresDataType.STRING_ARRAY
       elif(all(isinstance(x, (int, float)) for x in value)):
         return AresDataType.NUMBER_ARRAY

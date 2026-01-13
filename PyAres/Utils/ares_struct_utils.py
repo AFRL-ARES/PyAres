@@ -33,7 +33,8 @@ def create_string_struct(key: str, value: str) -> ares_struct_pb2.AresStruct:
         (AresStruct): A new AresStruct containing the provided key and value.
     """
     new_struct = ares_struct_pb2.AresStruct()
-    new_struct.fields[key] = ares_value_utils.create_string(value)
+    new_entry = new_struct.fields[key] 
+    new_entry.CopyFrom(ares_value_utils.create_string(value))
     return new_struct
 
 def create_number_struct(key: str, value: Union[int, float]) -> ares_struct_pb2.AresStruct:
@@ -48,7 +49,8 @@ def create_number_struct(key: str, value: Union[int, float]) -> ares_struct_pb2.
         (AresStruct): A new AresStruct containing the provided key and value.
     """
     new_struct = ares_struct_pb2.AresStruct()
-    new_struct.fields[key] = ares_value_utils.create_number(value)
+    new_entry = new_struct.fields[key]
+    new_entry.CopyFrom(ares_value_utils.create_number(value))
     return new_struct
 
 def create_bool_struct(key: str, value: bool) -> ares_struct_pb2.AresStruct:
@@ -63,7 +65,8 @@ def create_bool_struct(key: str, value: bool) -> ares_struct_pb2.AresStruct:
         (AresStruct): A new AresStruct containing the provided key and value.
     """
     new_struct = ares_struct_pb2.AresStruct()
-    new_struct.fields[key] = ares_value_utils.create_bool(value)
+    new_entry = new_struct.fields[key]
+    new_entry.CopyFrom(ares_value_utils.create_bool(value)) 
     return new_struct
 
 def create_null_struct(key: str) -> ares_struct_pb2.AresStruct:
@@ -77,7 +80,8 @@ def create_null_struct(key: str) -> ares_struct_pb2.AresStruct:
         (AresStruct): A new AresStruct containing the provided key and a null value.
     """
     new_struct = ares_struct_pb2.AresStruct()
-    new_struct.fields[key] = ares_value_utils.create_null()
+    new_entry = new_struct.fields[key]
+    new_entry.CopyFrom(ares_value_utils.create_null())
     return new_struct
 
 def create_string_array_struct(key: str, value: list[str]) -> ares_struct_pb2.AresStruct:
@@ -92,7 +96,8 @@ def create_string_array_struct(key: str, value: list[str]) -> ares_struct_pb2.Ar
         (AresStruct): A new AresStruct containing the provided key and value
     """
     new_struct = ares_struct_pb2.AresStruct()
-    new_struct.fields[key] = ares_value_utils.create_string_array(value)
+    new_entry = new_struct.fields[key]
+    new_entry.CopyFrom(ares_value_utils.create_string_array(value))
     return new_struct
 
 def create_number_array_struct(key: str, value: list[Union[int, float]]) -> ares_struct_pb2.AresStruct:
@@ -107,7 +112,8 @@ def create_number_array_struct(key: str, value: list[Union[int, float]]) -> ares
         (AresStruct): A new AresStruct containing the provided key and value
     """
     new_struct = ares_struct_pb2.AresStruct()
-    new_struct.fields[key] = ares_value_utils.create_number_array(value)
+    new_entry = new_struct.fields[key]
+    new_entry.CopyFrom(ares_value_utils.create_number_array(value))
     return new_struct
 
 def create_bytes_array_struct(key: str, value: bytes) -> ares_struct_pb2.AresStruct:
@@ -122,7 +128,8 @@ def create_bytes_array_struct(key: str, value: bytes) -> ares_struct_pb2.AresStr
         (AresStruct): A new AresStruct containing the provided key and value
     """
     new_struct = ares_struct_pb2.AresStruct()
-    new_struct.fields[key] = ares_value_utils.create_bytes(value)
+    new_entry = new_struct.fields[key]
+    new_entry.CopyFrom(ares_value_utils.create_bytes(value))
     return new_struct
 
 def add_value_to_struct(existing_struct: ares_struct_pb2.AresStruct, key: str, new_value: ares_struct_pb2.AresValue, replace: bool = True) -> ares_struct_pb2.AresStruct:
@@ -165,7 +172,7 @@ def create_empty_struct() -> ares_struct_pb2.AresStruct:
     """
     return ares_struct_pb2.AresStruct()
 
-def create_ares_struct(key: str, value: Any):
+def create_ares_struct(key: str, value: Any) -> ares_struct_pb2.AresStruct:
     """
     Creates a new AresStruct using the provided key and value.
 
@@ -193,18 +200,24 @@ def create_ares_struct(key: str, value: Any):
         if(len(value) == 0):
             return create_null_struct(key)
 
+        #Specifically placed here to catch bools before ints, as otherwise python with treat them as ints instead
+        elif(all(isinstance(item, bool) for item in value)):
+            new_struct = ares_struct_pb2.AresStruct()
+            new_struct.fields[key].CopyFrom(ares_value_utils.create_array(value))
+            return new_struct
+        
         elif(all(isinstance(item, str) for item in value)):
             return create_string_array_struct(key, value)
         
         elif(all(isinstance(item, (float, int)) for item in value)):
             return create_number_array_struct(key, value)
         
-        elif(all(isinstance(item, bool) for item in value)):
+        else:
             new_struct = ares_struct_pb2.AresStruct()
             new_struct.fields[key].CopyFrom(ares_value_utils.create_array(value))
             return new_struct
     
-    else:
-        return create_null_struct(key)
+    
+    return create_null_struct(key)
 
     
