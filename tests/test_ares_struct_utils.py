@@ -52,8 +52,6 @@ class TestAresStructUtils(unittest.TestCase):
         self.assertEqual(s_list_num.fields["k"].number_array_value.numbers, [1, 2])
 
         s_list_bool = ares_struct_utils.create_ares_struct("k", [True, False])
-        blah = s_list_bool.fields["k"]
-        bleh = blah.list_value.values
         self.assertEqual(s_list_bool.fields["k"].list_value.values[0].bool_value, True)
 
         s_empty = ares_struct_utils.create_ares_struct("k", [])

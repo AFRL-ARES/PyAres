@@ -15,10 +15,13 @@ def create_settings_schema_entry(
     choices: Union[list[str], list[int], list[float]],
     struct_schema: Optional[Dict[str, AresSchemaEntry]] = None) -> ares_data_schema_pb2.SchemaEntry:
     """
-    Takes in an AresSetting object and converts it into the protobuf SchemaEntry message.
+    Creates a protobuf SchemaEntry message from the provided setting details.
 
     Args:
-        new_setting: The AresSetting object that provides all the details around the setting implementation.
+        setting_type (AresDataType): The data type of the setting.
+        optional (bool): Whether the setting is optional.
+        choices (Union[list[str], list[int], list[float]]): A list of valid choices for the setting.
+        struct_schema (Optional[Dict[str, AresSchemaEntry]]): Nested schema definition for STRUCT types.
 
     Returns:
         (SchemaEntry): A new SchemaEntry message.

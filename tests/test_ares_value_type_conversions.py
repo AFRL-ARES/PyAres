@@ -41,7 +41,6 @@ class TestAresValueTypeConversions(unittest.TestCase):
     original_list = ["one", "two", "three"]
     list_value = ares_value_utils.create_ares_value(original_list)
     self.assertEqual(list_value.string_array_value.strings, original_list)
-    print("String Array Test Passed!")
 
   def test_bool_array_ares_value(self):
     original_list = [True, False, True]
