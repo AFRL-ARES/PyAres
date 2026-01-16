@@ -40,6 +40,10 @@ def py_to_ares_value(py_value, ares_value: ares_struct_pb2.AresValue):
         else:
             for item in py_value:
                 ares_value.list_value.values.append(create_ares_value(item))
+
+    elif py_value == None:
+        ares_value.null_value = ares_struct_pb2.NullValue.NULL_VALUE
+
     else:
         raise TypeError(f"Unsupported type for AresValue: {type(py_value)}")
 
