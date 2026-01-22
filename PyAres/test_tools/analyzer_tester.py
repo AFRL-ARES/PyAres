@@ -64,7 +64,7 @@ class AnalyzerTestClient:
             ares_struct_utils.dict_to_ares_struct(inputs, input_struct)
             
             settings_struct = ares_struct_utils.create_empty_struct()
-            ares_struct_utils.dict_to_ares_struct(settings, input_struct)
+            ares_struct_utils.dict_to_ares_struct(settings, settings_struct)
 
             request = analyzer_service.AnalysisRequest(inputs=input_struct, settings=settings_struct)
             
