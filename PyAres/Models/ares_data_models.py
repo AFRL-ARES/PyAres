@@ -27,7 +27,9 @@ class RequestMetadata():
         self.system_name = proto_metadata.system_name
         self.campaign_name = proto_metadata.campaign_name
         self.campaign_id = proto_metadata.campaign_id
-        self.experiment_id = proto_metadata.experiment_id  
+        self.experiment_id = proto_metadata.experiment_id
+        dt = proto_metadata.experiment_start_time.ToDatetime()
+        self.experiment_start_time = dt.strftime("%Y-%m-%d %H:%M:%S")
 
     @classmethod
     def from_default_values(cls):
