@@ -107,7 +107,7 @@ class TestAresAnalyzerService(unittest.TestCase):
         # Case A: Success (Matches Schema)
         req = analyzer_service.ParameterValidationRequest()
         entry = req.input_schema.fields["Voltage"]
-        new_schema_entry = ares_data_schema_pb2.SchemaEntry(type=ares_data_type_pb2.AresDataType.NUMBER, optional=False, description="Voltage value", unit="Volts")
+        new_schema_entry = ares_data_schema_pb2.AresValueSchema(type=ares_data_type_pb2.AresDataType.NUMBER, optional=False, description="Voltage value")
         entry.CopyFrom(new_schema_entry)
         resp = self.service._service_wrapper.ValidateInputs(req, None)
         self.assertTrue(resp.success, "Validation should pass for correct schema")
@@ -115,7 +115,7 @@ class TestAresAnalyzerService(unittest.TestCase):
         # Case B: Failure (Wrong Type)
         req_bad_type = analyzer_service.ParameterValidationRequest()
         bad_entry = req_bad_type.input_schema.fields["Voltage"]
-        bad_schema_entry = ares_data_schema_pb2.SchemaEntry(type=ares_data_type_pb2.AresDataType.STRING, optional=False, description="Voltage value", unit="Volts")
+        bad_schema_entry = ares_data_schema_pb2.AresValueSchema(type=ares_data_type_pb2.AresDataType.STRING, optional=False, description="Voltage value")
         bad_entry.CopyFrom(bad_schema_entry)
         resp_bad = self.service._service_wrapper.ValidateInputs(req_bad_type, None)
         self.assertFalse(resp_bad.success, "Validation should fail for type mismatch")

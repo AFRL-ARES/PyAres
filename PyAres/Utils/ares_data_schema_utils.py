@@ -3,19 +3,35 @@ from ares_datamodel import ares_data_schema_pb2
 from ..Models import ares_data_models
 from ..Models.ares_data_models import AresSchemaEntry
 
-def convert_ares_schema_entry_to_proto(entry: AresSchemaEntry) -> ares_data_schema_pb2.SchemaEntry:
+def convert_ares_schema_entry_to_proto(entry: AresSchemaEntry) -> ares_data_schema_pb2.AresValueSchema:
     proto_entry = create_settings_schema_entry(entry.type, entry.optional, entry.choices, entry.struct_schema)
     proto_entry.description = entry.description
-    proto_entry.unit = entry.unit
+    
+    if entry.quantity_schema:
+        proto_entry.quantity_schema.quantity_type = entry.quantity_schema.quantity_type
+        proto_entry.quantity_schema.bounds_unit = entry.quantity_schema.bounds_unit
+        if entry.quantity_schema.min_scalar_value is not None:
+            proto_entry.quantity_schema.min_scalar_value = entry.quantity_schema.min_scalar_value
+        if entry.quantity_schema.max_scalar_value is not None:
+            proto_entry.quantity_schema.max_scalar_value = entry.quantity_schema.max_scalar_value
+
+    if entry.list_element_schema:
+        proto_entry.list_element_schema.CopyFrom(convert_ares_schema_entry_to_proto(entry.list_element_schema))
+
+    if entry.min_number_value is not None:
+        proto_entry.min_number_value = entry.min_number_value
+    if entry.max_number_value is not None:
+        proto_entry.max_number_value = entry.max_number_value
+
     return proto_entry
 
 def create_settings_schema_entry(
     setting_type: ares_data_models.AresDataType, 
     optional: bool, 
     choices: Union[list[str], list[int], list[float]],
-    struct_schema: Optional[Dict[str, AresSchemaEntry]] = None) -> ares_data_schema_pb2.SchemaEntry:
+    struct_schema: Optional[Dict[str, AresSchemaEntry]] = None) -> ares_data_schema_pb2.AresValueSchema:
     """
-    Creates a protobuf SchemaEntry message from the provided setting details.
+    Creates a protobuf AresValueSchema message from the provided setting details.
 
     Args:
         setting_type (AresDataType): The data type of the setting.
@@ -24,23 +40,17 @@ def create_settings_schema_entry(
         struct_schema (Optional[Dict[str, AresSchemaEntry]]): Nested schema definition for STRUCT types.
 
     Returns:
-        (SchemaEntry): A new SchemaEntry message.
+        (AresValueSchema): A new AresValueSchema message.
     """
+    schema_entry = ares_data_schema_pb2.AresValueSchema()
+    schema_entry.type = setting_type.value
+    schema_entry.optional = optional
 
-    if(isinstance(choices, list)):
-        if(len(choices) == 0):
-            schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional)
-
-        elif(all(isinstance(item, str) for item in choices)):
-            schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional)
+    if isinstance(choices, list) and len(choices) > 0:
+        if all(isinstance(item, str) for item in choices):
             schema_entry.string_choices.strings.extend(choices)
-    
-        elif(all(isinstance(item, (int, float)) for item in choices)):
-            schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional)
+        elif all(isinstance(item, (int, float)) for item in choices):
             schema_entry.number_choices.numbers.extend(choices)
-
-        else:
-            schema_entry = ares_data_schema_pb2.SchemaEntry(type=setting_type.value, optional=optional)
             
     if struct_schema is not None:
         for key, value in struct_schema.items():

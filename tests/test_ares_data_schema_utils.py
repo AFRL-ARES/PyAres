@@ -48,15 +48,13 @@ class TestAresDataSchemaUtils(unittest.TestCase):
             type=AresDataType.NUMBER,
             optional=True,
             description="Test Desc",
-            unit="m/s",
             choices=[1.0, 2.0]
         )
         proto = ares_data_schema_utils.convert_ares_schema_entry_to_proto(py_entry)
         self.assertEqual(proto.type, ares_data_type_pb2.AresDataType.NUMBER)
         self.assertTrue(proto.optional)
         self.assertEqual(proto.description, "Test Desc")
-        self.assertEqual(proto.unit, "m/s")
-        self.assertEqual(proto.number_choices.numbers, [1.0, 2.0])
+        self.assertEqual(list(proto.number_choices.numbers), [1.0, 2.0])
 
     def test_nested_struct_schema(self):
         nested_field = AresSchemaEntry(type=AresDataType.STRING, description="Inner")

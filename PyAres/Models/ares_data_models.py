@@ -14,6 +14,10 @@ class AresDataType(Enum):
     LIST = 7
     STRUCT = 8
     BYTE_ARRAY = 9
+    ANY = 10
+    UNIT = 11
+    FUNCTION = 12
+    QUANTITY = 13
 
 class Outcome(Enum):
     UNSPECIFIED_OUTCOME = 0
@@ -38,10 +42,27 @@ class RequestMetadata():
         return cls(default)
 
 @dataclass
+class Quantity:
+    scalar: float
+    type: int # QuantityType enum value
+    unit: str
+
+@dataclass
+class QuantitySchema:
+    quantity_type: int = 0
+    bounds_unit: str = ""
+    min_scalar_value: Optional[float] = None
+    max_scalar_value: Optional[float] = None
+
+@dataclass
 class AresSchemaEntry:
     type: AresDataType
     optional: bool = False
     description: str = ""
     unit: str = ""
     choices: Union[List[str], List[int], List[float]] = field(default_factory=list)
+    quantity_schema: Optional[QuantitySchema] = None
     struct_schema: Optional[Dict[str, 'AresSchemaEntry']] = None
+    list_element_schema: Optional['AresSchemaEntry'] = None
+    min_number_value: Optional[float] = None
+    max_number_value: Optional[float] = None

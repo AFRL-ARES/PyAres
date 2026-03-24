@@ -11,7 +11,7 @@ def proto_ares_type_to_python_ares_type(proto_value: ares_data_type_pb2.AresData
   """ A method to convert from the protobuf AresDataType class to the python version """
   return AresDataType(proto_value)
 
-def determine_python_ares_data_type(value: Union[int, float, str, bool, list]):
+def determine_python_ares_data_type(value: Union[int, float, str, bool, list, dict, bytes]):
   """ A method that takes in a value and returns the corresponding `PyAres.Models.AresDataType`"""
   match value:
     case str():
@@ -22,6 +22,10 @@ def determine_python_ares_data_type(value: Union[int, float, str, bool, list]):
       return AresDataType.NUMBER
     case float():
       return AresDataType.NUMBER
+    case bytes():
+      return AresDataType.BYTE_ARRAY
+    case dict():
+      return AresDataType.STRUCT
     case list():
       if(all(isinstance(x, bool) for x in value)):
         return AresDataType.LIST
@@ -31,5 +35,9 @@ def determine_python_ares_data_type(value: Union[int, float, str, bool, list]):
         return AresDataType.NUMBER_ARRAY
       else:
         return AresDataType.LIST
+    case None:
+      return AresDataType.NULL
     case _:
+      # If it has specific attributes, it might be a Quantity or other complex type
+      # This part might need more refinement as we define how Quantity looks in Python
       return AresDataType.UNKNOWN

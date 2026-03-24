@@ -3,23 +3,33 @@ from ares_datamodel import ares_data_type_pb2
 from typing import Union, Any, Dict
 
 from . import ares_data_type_utils
-from ..Models import AresDataType 
+from ..Models import AresDataType, Quantity
 
 def ares_value_to_py(ares_value: ares_struct_pb2.AresValue):
     """Converts an AresValue protobuf message to a Python native type."""
-    type_map = {
-        "null_value": None,
-        "number_value": ares_value.number_value,
-        "string_value": ares_value.string_value,
-        "bool_value": ares_value.bool_value,
-        "string_array_value": ares_value.string_array_value.strings,
-        "number_array_value": ares_value.number_array_value.numbers,
-        "bytes_value": ares_value.bytes_value
-    }
-    
     field = ares_value.WhichOneof("kind")
-    if field in type_map:
-        return type_map[field]
+    if field == "null_value":
+        return None
+    elif field == "number_value":
+        return ares_value.number_value
+    elif field == "string_value":
+        return ares_value.string_value
+    elif field == "bool_value":
+        return ares_value.bool_value
+    elif field == "string_array_value":
+        return list(ares_value.string_array_value.strings)
+    elif field == "number_array_value":
+        return list(ares_value.number_array_value.numbers)
+    elif field == "bytes_value":
+        return ares_value.bytes_value
+    elif field == "list_value":
+        return [ares_value_to_py(v) for v in ares_value.list_value.values]
+    elif field == "struct_value":
+        return {k: ares_value_to_py(v) for k, v in ares_value.struct_value.fields.items()}
+    elif field == "quantity_value":
+        return Quantity(scalar=ares_value.quantity_value.scalar, 
+                        type=ares_value.quantity_value.type, 
+                        unit=ares_value.quantity_value.unit)
     return None
 
 def py_to_ares_value(py_value, ares_value: ares_struct_pb2.AresValue):
@@ -32,6 +42,13 @@ def py_to_ares_value(py_value, ares_value: ares_struct_pb2.AresValue):
         ares_value.number_value = py_value
     elif isinstance(py_value, bytes):
         ares_value.bytes_value = py_value
+    elif isinstance(py_value, Quantity):
+        ares_value.quantity_value.scalar = py_value.scalar
+        ares_value.quantity_value.type = py_value.type
+        ares_value.quantity_value.unit = py_value.unit
+    elif isinstance(py_value, dict):
+        for k, v in py_value.items():
+            py_to_ares_value(v, ares_value.struct_value.fields[k])
     elif isinstance(py_value, list):
         if(all(isinstance(x, str) for x in py_value)):
             ares_value.string_array_value.strings.extend(py_value)
@@ -46,6 +63,14 @@ def py_to_ares_value(py_value, ares_value: ares_struct_pb2.AresValue):
 
     else:
         raise TypeError(f"Unsupported type for AresValue: {type(py_value)}")
+
+def create_quantity(value: Quantity) -> ares_struct_pb2.AresValue:
+    """ Creates a new AresValue, initialized to the provided Quantity. """
+    ares_val = ares_struct_pb2.AresValue()
+    ares_val.quantity_value.scalar = value.scalar
+    ares_val.quantity_value.type = value.type
+    ares_val.quantity_value.unit = value.unit
+    return ares_val
 
 def create_number(value: Union[int, float]) -> ares_struct_pb2.AresValue:
     """
@@ -203,6 +228,8 @@ def create_default(python_datatype: AresDataType) -> ares_struct_pb2.AresValue:
     
     elif(dataType == ares_data_type_pb2.AresDataType.STRUCT):
         return create_struct({})
+    elif(dataType == ares_data_type_pb2.AresDataType.QUANTITY):
+        return create_quantity(Quantity(0, 0, ""))
     else:
         return create_null()
     
@@ -228,6 +255,9 @@ def create_ares_value(value: Any) -> ares_struct_pb2.AresValue:
     
     elif(isinstance(value, bytes)):
         return create_bytes(value)
+    
+    elif(isinstance(value, Quantity)):
+        return create_quantity(value)
     
     elif(isinstance(value, list)):
         if all(isinstance(x, bool) for x in value):

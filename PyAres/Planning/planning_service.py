@@ -37,7 +37,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         self._service_name: str = service_name
         self._description: str = description
         self._version: str = version
-        self._settings: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
+        self._settings: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
         self._planner_options: list[planner_pb2.Planner] = []
         self._supported_types: list[ares_data_type_pb2.AresDataType] = []
         self._timeout: int = timeout
@@ -54,15 +54,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         capabilities.available_planners.extend(self._planner_options)
 
         for(key, value) in self._settings.items():
-            settings_entry: ares_data_schema_pb2.SchemaEntry = capabilities.settings_schema.fields[key]
-            settings_entry.type = value.type
-            settings_entry.optional = value.optional
-
-            if len(value.string_choices.strings) != 0:
-                settings_entry.string_choices.strings.extend(value.string_choices.strings)
-
-            elif len(value.number_choices.numbers) != 0:
-                settings_entry.number_choices.numbers.extend(value.number_choices.numbers)
+            capabilities.settings_schema.fields[key].CopyFrom(value)
 
         print("Capabilites Sent!")
         return capabilities

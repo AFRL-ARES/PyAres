@@ -36,8 +36,8 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
         self._info = info
         self._timeout = timeout
         self._custom_analysis_logic = custom_analysis_logic
-        self._settings: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
-        self._analysis_parameters: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
+        self._settings: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
+        self._analysis_parameters: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
 
     def GetInfo(self, request, context) -> connection_info_pb2.InfoResponse:
         print("Info Requested!")
@@ -138,7 +138,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
 
     def ValidateInputs(self, request: analyzer_service.ParameterValidationRequest, context): 
         response = analyzer_service.ParameterValidationResult(success=True)
-        provided_params: Mapping[str, ares_data_schema_pb2.SchemaEntry] = request.input_schema.fields
+        provided_params: Mapping[str, ares_data_schema_pb2.AresValueSchema] = request.input_schema.fields
 
         for stored_key, stored_schema in self._analysis_parameters.items():
             if stored_key in provided_params:

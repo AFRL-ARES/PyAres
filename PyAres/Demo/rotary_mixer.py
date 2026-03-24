@@ -1,14 +1,26 @@
 from PyAres import AresDeviceService, AresDataType, DeviceSchemaEntry, DeviceCommandDescriptor
 
+class RotaryMixer:
+    def __init__(self, speed):
+        self.speed = speed
+
+
+mixer = RotaryMixer(1200)
+
 # 1. Define your hardware logic
 def set_speed(rpm: float):
     print(f"Setting motor speed to {rpm}")
+    mixer.speed = rpm
     # Hardware communication goes here...
     return {} # Return empty dict if no data needs to be sent back
 
+def get_speed():
+    print("Hey I got speed")
+    return { "rpm": mixer.speed }
+
 def get_status():
     # Return a dictionary matching your state schema
-    return { "rpm": 1200 } 
+    return { "rpm": mixer.speed } 
 
 def safe_mode():
     print("Stopping motor immediately!")
@@ -30,8 +42,14 @@ input_schema = {
 }
 cmd_descriptor = DeviceCommandDescriptor("Set Speed", "Sets mixer speed", input_schema, {})
 
+output_schema = {
+    "rpm": DeviceSchemaEntry(AresDataType.NUMBER, "Speed in RPM", "RPM")
+}
+get_speed_descriptor = DeviceCommandDescriptor("Get Speed", "Gets mixer speed", {}, output_schema)
+
 # 4. Register the command
 service.add_new_command(cmd_descriptor, set_speed)
+service.add_new_command(get_speed_descriptor, get_speed)
 
 # 5. Start
 service.start()

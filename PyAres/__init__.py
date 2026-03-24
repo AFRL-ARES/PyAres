@@ -12,3 +12,6 @@ from .Device import DeviceCommandDescriptor
 from .Device import DeviceSchemaEntry
 from .Models import AresDataType
 from .Models import Outcome
+from .Models import AresSchemaEntry
+from .Models import Quantity
+from .Models import QuantitySchema

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "googleapis-common-protos>=1.70.0"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
@@ -16,9 +16,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "grpcio-tools >= 1.75.1",
-    "grpcio >= 1.71.0, < 2.0.0",
-    "ares-datamodel >= 0.16.1",
+    "ares-datamodel >= 0.20.0",
 ]
 
 [project.urls]

@@ -111,7 +111,7 @@ class TestAresDeviceService(unittest.TestCase):
         response = self.service._service_wrapper.ExecuteCommand(req, None)
         
         self.assertTrue(response.success, response.error)
-        result_dict = ares_struct_utils.ares_struct_to_dict(response.result)
+        result_dict = ares_struct_utils.ares_struct_to_dict(response.result.struct_value)
         self.assertEqual(result_dict["axis"], "X")
         self.assertEqual(result_dict["final_speed"], 50.0)
 

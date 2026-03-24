@@ -85,8 +85,11 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       provided_param_dict = ares_struct_utils.ares_struct_to_dict(request.arguments)
       result : Dict[str, Any] = method(**provided_param_dict)
       
-      for key, value in result.items():
-        ares_struct_utils.add_value_to_struct(response.result, key, ares_value_utils.create_ares_value(value))
+      if isinstance(result, dict):
+        for key, value in result.items():
+            ares_struct_utils.add_value_to_struct(response.result.struct_value, key, ares_value_utils.create_ares_value(value))
+      else:
+        response.result.CopyFrom(ares_value_utils.create_ares_value(result))
         
       response.success = True
       return response
