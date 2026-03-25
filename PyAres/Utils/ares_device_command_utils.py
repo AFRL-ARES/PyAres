@@ -3,7 +3,8 @@ from typing import Union
 from ..Device import DeviceCommandDescriptor
 from ..Device import DeviceSchemaEntry
 from ares_datamodel.device import device_command_descriptor_pb2
-from ares_datamodel import ares_data_schema_pb2
+from ares_datamodel import ares_data_schema_pb2, ares_data_type_pb2
+from ares_datamodel import to_quantity_schema
 
 from . import ares_data_type_utils
 
@@ -23,7 +24,7 @@ def python_command_description_to_proto(python_description: DeviceCommandDescrip
     first_val = list(python_description.output_schema.values())[0]
     proto_description.output_schema.CopyFrom(python_device_schema_entry_to_proto(first_val))
   elif len(python_description.output_schema) > 1:
-    proto_description.output_schema.type = ares_data_schema_pb2.AresDataType.STRUCT
+    proto_description.output_schema.type = ares_data_type_pb2.AresDataType.STRUCT
     for key, value in python_description.output_schema.items():
       proto_description.output_schema.struct_schema.fields[key].CopyFrom(python_device_schema_entry_to_proto(value))
 
@@ -45,13 +46,9 @@ def python_device_schema_entry_to_proto(entry: DeviceSchemaEntry) -> ares_data_s
     elif all(isinstance(x, str) for x in entry.constraints):
       proto_schema.string_choices.strings.extend(entry.constraints)
 
+  # If a quantity schema is provided, utilize it. Use datamodel helpers to create the protobuf representation
   if entry.quantity_schema:
-    proto_schema.quantity_schema.quantity_type = entry.quantity_schema.quantity_type
-    proto_schema.quantity_schema.bounds_unit = entry.quantity_schema.bounds_unit
-    if entry.quantity_schema.min_scalar_value is not None:
-      proto_schema.quantity_schema.min_scalar_value = entry.quantity_schema.min_scalar_value
-    if entry.quantity_schema.max_scalar_value is not None:
-      proto_schema.quantity_schema.max_scalar_value = entry.quantity_schema.max_scalar_value
+    proto_schema.quantity_schema.CopyFrom(to_quantity_schema(entry.quantity_schema.bounds_unit, entry.quantity_schema.min_scalar_value, entry.quantity_schema.max_scalar_value))
 
   if entry.struct_schema:
     for key, sub_entry in entry.struct_schema.items():

@@ -1,5 +1,6 @@
-from PyAres import AresDeviceService, DeviceCommandDescriptor, DeviceSchemaEntry, AresDataType
+from PyAres import *
 from typing import Dict
+import pint
 import time
 
 class DemoDevice:
@@ -25,20 +26,21 @@ class DemoDevice:
 device = DemoDevice()
 
 if __name__ == "__main__":
-  # Basic information about my device
+  ureg = pint.UnitRegistry()  # Basic information about my device
   device_name = "Demo Device"
   description = "A device to demonstrate the PyAres device capabilities"
   version = "1.0.0"
   device_service = AresDeviceService(device.enter_safe_mode, device.get_device_state, device_name, description, version)
 
   # Create the "Set Temperature" Command
-  parameter_schema = DeviceSchemaEntry(AresDataType.NUMBER, "A numeric temperature value", "Degree's Celsius")
+  quantity_schema = QuantitySchema(ureg.degree_Celsius, 40.0, 125.0)
+  parameter_schema = DeviceSchemaEntry(AresDataType.QUANTITY, "A numeric temperature value", quantity_schema=quantity_schema)
   input_schema = { "temperature": parameter_schema }
   set_temp_descriptor = DeviceCommandDescriptor("Set Temperature", "Set's the temperature of the demo device to the provided value.", input_schema, {})
   device_service.add_new_command(set_temp_descriptor, device.set_temperature)
 
   # Create the "Get Temperature" Command
-  output_schema = {"temperature": DeviceSchemaEntry(AresDataType.NUMBER, "The current temperature of the device", "Degree's Celsius")}
+  output_schema = {"temperature": DeviceSchemaEntry(AresDataType.QUANTITY, "The current temperature of the device", quantity_schema=quantity_schema)}
   get_temp_desc = DeviceCommandDescriptor("Get Temperature", "Get's the current temperature of the demo device.", {}, output_schema)
   device_service.add_new_command(get_temp_desc, device.get_temperature)
 

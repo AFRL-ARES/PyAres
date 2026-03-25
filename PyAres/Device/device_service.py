@@ -37,9 +37,9 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
     self.version = version
     self._enter_safe_mode = enter_safe_mode
     self._update_device_state = update_device_state
-    self._setting_schema: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
-    self._current_settings: Dict[str, ares_struct_pb2.AresValue] = {}
-    self._state_schema: Dict[str, ares_data_schema_pb2.SchemaEntry] = {}
+    self._setting_schema: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
+    self._current_settings: Dict[str, ares_struct_pb2.AresStruct] = {}
+    self._state_schema: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
     self._commands: list[DeviceCommandDescriptor] = []
     self._command_methods: Dict[str, Callable] = {}
 

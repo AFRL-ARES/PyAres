@@ -2,6 +2,7 @@ from ares_datamodel import request_metadata_pb2
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import Union, List, Optional, Dict
+import pint
 
 class AresDataType(Enum):
     UNKNOWN = 0
@@ -49,8 +50,7 @@ class Quantity:
 
 @dataclass
 class QuantitySchema:
-    quantity_type: int = 0
-    bounds_unit: str = ""
+    bounds_unit: pint.Unit = None
     min_scalar_value: Optional[float] = None
     max_scalar_value: Optional[float] = None
 
