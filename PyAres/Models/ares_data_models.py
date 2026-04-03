@@ -36,6 +36,17 @@ class RequestMetadata():
         dt = proto_metadata.experiment_start_time.ToDatetime()
         self.experiment_start_time = dt.strftime("%Y-%m-%d %H:%M:%S")
 
+    def __str__(self) ->str:
+        return (f"RequestMetadata object with fields:\n"
+                f"System Name: {self.system_name}\n"
+                f"Campaign Name: {self.campaign_name}\n"
+                f"Campaign ID: {self.campaign_id}\n"
+                f"Experiment ID: {self.experiment_id}\n"
+                f"Experiment Start Time: {self.experiment_start_time}\n")
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+    
     @classmethod
     def from_default_values(cls):
         """ Alternative constructor for creating fake metadata """
