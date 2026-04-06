@@ -124,6 +124,7 @@ class PlanRequest:
         settings_str = "\n ".join([f"{k}: {v}" for k, v in self.settings.items()])
         analysis_str = "\n ".join([f"{i}: {val}" for i, val in enumerate(self.analysis_results)])
         
+        metadata_str = str(self.request_metadata).replace('\n', '\n ')
         return (f"PlanRequest object with:\n"
                 f"parameters:\n"
                 f" {param_str}\n"
@@ -132,7 +133,7 @@ class PlanRequest:
                 f"analysis_results:\n"
                 f" {analysis_str}\n"
                 f"request_metadata:\n"
-                f"{str(self.request_metadata).replace('\n','\n ')}")
+                f"{metadata_str}")
     
     def __repr__(self) -> str:
         return self.__str__()
