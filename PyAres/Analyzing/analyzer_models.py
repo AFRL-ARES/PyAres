@@ -11,7 +11,7 @@ class AnalysisRequest:
 
     def __str__(self) -> str:
         """Returns a string representation of the AnalysisRequest with all information organized."""
-        metadata_str = str(self.request_metadata).replace('\n', '\n ')
+        metadata_str = str(self.request_metadata).replace('\n', '\n\t')
         return (f"AnalysisRequest object with:\n"
                 f"  inputs: {self.inputs}\n"
                 f"  settings: {self.settings}\n"
