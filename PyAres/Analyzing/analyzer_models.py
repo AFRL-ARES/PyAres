@@ -9,6 +9,17 @@ class AnalysisRequest:
         self.settings = settings
         self.request_metadata = metadata
 
+    def __str__(self) -> str:
+        """Returns a string representation of the AnalysisRequest with all information organized."""
+        metadata_str = str(self.request_metadata).replace('\n', '\n\t')
+        return (f"AnalysisRequest object with:\n"
+                f"  inputs: {self.inputs}\n"
+                f"  settings: {self.settings}\n"
+                f"  metadata: {metadata_str}")
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
 class Analysis:
     """ Represents the result of an analysis process. """
 
@@ -24,7 +35,15 @@ class Analysis:
         self.result = result
         self.outcome = outcome
         self.error_string = error_string
-   
+
+    def __str__(self) -> str:
+        return (f"Analysis object with:\n"
+                f"  result: {self.result}\n"
+                f"  outcome: {self.outcome}\n"
+                f"  error_string: {self.error_string}")
+    
+    def __repr__(self) -> str:
+        return self.__str__()   
 
 class InfoResponse:
     """ A response message that provides basic information about your analyzer. """   
