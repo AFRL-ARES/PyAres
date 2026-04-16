@@ -103,8 +103,8 @@ class DemoDevice:
     return {}
 
   def get_temperature(self):
-    # Dictionary key should match what we defined in our schema earlier
-    return { "temperature": self.temperature }
+    # Data type should match the one specified in your output schema
+    return self.temperature
   
   def get_device_state(self):
     state_dictionary = { "temperature": self.temperature }
