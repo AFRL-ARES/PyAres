@@ -1,6 +1,7 @@
 from typing import Union, cast
 from ares_datamodel import ares_data_type_pb2
 from ..Models import AresDataType
+from datetime import datetime
 
 def python_ares_type_to_proto_ares_type(py_value: AresDataType) -> ares_data_type_pb2.AresDataType:
   """ A method to convert from the python AresDataType class to the protobuf version """
@@ -22,6 +23,8 @@ def determine_python_ares_data_type(value: Union[int, float, str, bool, list, di
       return AresDataType.NUMBER
     case float():
       return AresDataType.NUMBER
+    case datetime():
+      return AresDataType.TIMESTAMP
     case bytes():
       return AresDataType.BYTE_ARRAY
     case dict():

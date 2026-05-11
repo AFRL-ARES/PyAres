@@ -1,5 +1,7 @@
 from ares_datamodel import ares_struct_pb2
 from ares_datamodel import ares_data_type_pb2
+from datetime import datetime, timezone
+from google.protobuf import timestamp_pb2
 from typing import Union, Any, Dict
 
 from . import ares_data_type_utils
@@ -12,6 +14,12 @@ def ares_value_to_py(ares_value: ares_struct_pb2.AresValue):
         return None
     elif field == "number_value":
         return ares_value.number_value
+    elif field == "timestamp_value":
+        return ares_value.timestamp_value.ToDatetime(tzinfo=timezone.utc)
+    elif field == "float_value":
+        return ares_value.float_value
+    elif field == "int_value":
+        return ares_value.int_value
     elif field == "string_value":
         return ares_value.string_value
     elif field == "bool_value":
@@ -40,6 +48,8 @@ def py_to_ares_value(py_value, ares_value: ares_struct_pb2.AresValue):
         ares_value.bool_value = py_value
     elif isinstance(py_value, (int, float)):
         ares_value.number_value = py_value
+    elif isinstance(py_value, (datetime, timestamp_pb2.Timestamp)):
+        ares_value.timestamp_value.CopyFrom(_to_timestamp(py_value))
     elif isinstance(py_value, bytes):
         ares_value.bytes_value = py_value
     elif isinstance(py_value, Quantity):
@@ -52,6 +62,9 @@ def py_to_ares_value(py_value, ares_value: ares_struct_pb2.AresValue):
     elif isinstance(py_value, list):
         if(all(isinstance(x, str) for x in py_value)):
             ares_value.string_array_value.strings.extend(py_value)
+        elif(all(isinstance(x, bool) for x in py_value)):
+            for item in py_value:
+                ares_value.list_value.values.append(create_ares_value(item))
         elif(all(isinstance(x, (int, float)) for x in py_value)):
             ares_value.number_array_value.numbers.extend(py_value)
         else:
@@ -83,6 +96,52 @@ def create_number(value: Union[int, float]) -> ares_struct_pb2.AresValue:
         (AresValue): A new AresValue containing the provided number value.
     """
     return ares_struct_pb2.AresValue(number_value=value)
+
+def _to_timestamp(value: Union[datetime, timestamp_pb2.Timestamp]) -> timestamp_pb2.Timestamp:
+    if isinstance(value, timestamp_pb2.Timestamp):
+        return value
+
+    timestamp = timestamp_pb2.Timestamp()
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    timestamp.FromDatetime(value.astimezone(timezone.utc))
+    return timestamp
+
+def create_timestamp(value: Union[datetime, timestamp_pb2.Timestamp]) -> ares_struct_pb2.AresValue:
+    """
+    Creates a new AresValue, initialized to the provided timestamp value.
+
+    Args:
+        value (Union[datetime, Timestamp]): The timestamp to be stored in the new AresValue.
+
+    Returns:
+        (AresValue): A new AresValue containing the provided timestamp value.
+    """
+    return ares_struct_pb2.AresValue(timestamp_value=_to_timestamp(value))
+
+def create_float(value: float) -> ares_struct_pb2.AresValue:
+    """
+    Creates a new AresValue, initialized to the provided float value.
+
+    Args:
+        value (float): The double-backed float to be stored in the new AresValue.
+
+    Returns:
+        (AresValue): A new AresValue containing the provided float value.
+    """
+    return ares_struct_pb2.AresValue(float_value=float(value))
+
+def create_int(value: int) -> ares_struct_pb2.AresValue:
+    """
+    Creates a new AresValue, initialized to the provided int value.
+
+    Args:
+        value (int): The integer to be stored in the new AresValue.
+
+    Returns:
+        (AresValue): A new AresValue containing the provided int value.
+    """
+    return ares_struct_pb2.AresValue(int_value=int(value))
 
 def create_string(value: str) -> ares_struct_pb2.AresValue:
     """
@@ -182,7 +241,7 @@ def create_struct(values: Dict) -> ares_struct_pb2.AresValue:
         (AresValue): A new AresValue containing the provided dictionaries values in an AresStruct.
     """
     ares_value = ares_struct_pb2.AresValue()
-    
+
     for key, value in values.items():
         new_entry = ares_value.struct_value.fields[key]
         new_entry.CopyFrom(create_ares_value(value))
@@ -207,6 +266,12 @@ def create_default(python_datatype: AresDataType) -> ares_struct_pb2.AresValue:
     
     elif(dataType == ares_data_type_pb2.AresDataType.NUMBER):
         return create_number(0)
+    elif(dataType == ares_data_type_pb2.AresDataType.TIMESTAMP):
+        return create_timestamp(datetime.fromtimestamp(0, tz=timezone.utc))
+    elif(dataType == ares_data_type_pb2.AresDataType.FLOAT):
+        return create_float(0.0)
+    elif(dataType == ares_data_type_pb2.AresDataType.INT):
+        return create_int(0)
     
     elif(dataType == ares_data_type_pb2.AresDataType.STRING):
         return create_string("")
@@ -246,16 +311,19 @@ def create_ares_value(value: Any) -> ares_struct_pb2.AresValue:
     """
     if(isinstance(value, str)):
         return create_string(value)
-    
+
     elif(isinstance(value, bool)):
         return create_bool(value)
 
     elif(isinstance(value, (int, float))):
         return create_number(value)
-    
+
+    elif(isinstance(value, (datetime, timestamp_pb2.Timestamp))):
+        return create_timestamp(value)
+
     elif(isinstance(value, bytes)):
         return create_bytes(value)
-    
+
     elif(isinstance(value, Quantity)):
         return create_quantity(value)
     
@@ -272,7 +340,7 @@ def create_ares_value(value: Any) -> ares_struct_pb2.AresValue:
         else:
             return create_array(value)
         
-    elif(isinstance(value, Dict)):
+    elif(isinstance(value, dict)):
         return create_struct(value)
         
     else:
