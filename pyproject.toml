@@ -16,7 +16,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "ares-datamodel >= 0.21.1",
+    "ares-datamodel >= 0.22.0",
 ]
 
 [project.urls]
