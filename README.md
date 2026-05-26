@@ -1,5 +1,7 @@
 # PyAres
-The PyAres library is designed to provide support for building planners, analyzers and devices as part of your ARES self driving labratory. PyAres leverages the power of protobuf and gRPC to communicate with your ARES system while providing a simple Pythonic API. 
+The PyAres library is designed to provide support for building planners, analyzers and devices as part of your ARES self driving labratory. PyAres leverages the power of protobuf and gRPC to communicate with your ARES system while providing a simple Pythonic API.
+
+You can find additional documentation on PyAres as well as the rest of the ARES ecosystem by visting https://afrl-ares.github.io/ to browse our centralized documentation site.
 
 ### ✨ Features
 * A Pythonic API built on the performance of Protobuf and gRPC to streamline the creation of self-driving lab components
