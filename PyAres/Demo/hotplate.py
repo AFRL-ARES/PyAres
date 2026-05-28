@@ -54,9 +54,19 @@ if __name__ == "__main__":
     service.add_new_command(set_cmd, my_hotplate.set_temperature)
 
     # 4. Define Command: Get Temperature
-    # This schema tells ARES to expect a number back
+    # This schema tells ARES to expect a struct back
     output_schema = {
-        "current_temp": DeviceSchemaEntry(AresDataType.NUMBER, "Current Temperature", "Celsius")
+        "output": DeviceSchemaEntry(
+            AresDataType.STRUCT,
+            "Current temperature output",
+            struct_schema={
+                "current_temp": DeviceSchemaEntry(
+                    AresDataType.NUMBER,
+                    "Current Temperature",
+                    "Celsius"
+                )
+            }
+        )
     }
     get_cmd = DeviceCommandDescriptor(
         "Get Temp", 
