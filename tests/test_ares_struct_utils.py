@@ -1,6 +1,7 @@
 import unittest
 from PyAres.Utils import ares_struct_utils
 from ares_datamodel import ares_struct_pb2
+from datetime import datetime, timezone
 
 class TestAresStructUtils(unittest.TestCase):
     def test_create_string_struct(self):
@@ -10,6 +11,20 @@ class TestAresStructUtils(unittest.TestCase):
     def test_create_number_struct(self):
         s = ares_struct_utils.create_number_struct("key", 123)
         self.assertEqual(s.fields["key"].number_value, 123)
+
+    def test_create_new_scalar_structs(self):
+        timestamp = datetime(2026, 5, 10, 12, 30, tzinfo=timezone.utc)
+
+        s_timestamp = ares_struct_utils.create_timestamp_struct("key", timestamp)
+        self.assertEqual(s_timestamp.fields["key"].WhichOneof("kind"), "timestamp_value")
+
+        s_float = ares_struct_utils.create_float_struct("key", 1.25)
+        self.assertEqual(s_float.fields["key"].WhichOneof("kind"), "float_value")
+        self.assertEqual(s_float.fields["key"].float_value, 1.25)
+
+        s_int = ares_struct_utils.create_int_struct("key", 42)
+        self.assertEqual(s_int.fields["key"].WhichOneof("kind"), "int_value")
+        self.assertEqual(s_int.fields["key"].int_value, 42)
 
     def test_create_bool_struct(self):
         s = ares_struct_utils.create_bool_struct("key", True)
@@ -44,6 +59,9 @@ class TestAresStructUtils(unittest.TestCase):
 
         s_bytes = ares_struct_utils.create_ares_struct("k", b"123")
         self.assertEqual(s_bytes.fields["k"].bytes_value, b"123")
+
+        s_timestamp = ares_struct_utils.create_ares_struct("k", datetime(2026, 5, 10, 12, 30, tzinfo=timezone.utc))
+        self.assertEqual(s_timestamp.fields["k"].WhichOneof("kind"), "timestamp_value")
 
         s_list_str = ares_struct_utils.create_ares_struct("k", ["a", "b"])
         self.assertEqual(s_list_str.fields["k"].string_array_value.strings, ["a", "b"])

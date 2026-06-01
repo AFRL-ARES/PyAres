@@ -1,4 +1,6 @@
 from ares_datamodel import ares_struct_pb2
+from datetime import datetime
+from google.protobuf import timestamp_pb2
 from typing import Union, Dict, Any
 
 from . import ares_value_utils
@@ -51,6 +53,54 @@ def create_number_struct(key: str, value: Union[int, float]) -> ares_struct_pb2.
     new_struct = ares_struct_pb2.AresStruct()
     new_entry = new_struct.fields[key]
     new_entry.CopyFrom(ares_value_utils.create_number(value))
+    return new_struct
+
+def create_timestamp_struct(key: str, value: Union[datetime, timestamp_pb2.Timestamp]) -> ares_struct_pb2.AresStruct:
+    """
+    Creates a new AresStruct with the provided timestamp and key.
+
+    Args:
+        key (str): The associated key to be used when storing the given value.
+        value (Union[datetime, Timestamp]): The timestamp to be stored in the new AresStruct.
+
+    Returns:
+        (AresStruct): A new AresStruct containing the provided key and value.
+    """
+    new_struct = ares_struct_pb2.AresStruct()
+    new_entry = new_struct.fields[key]
+    new_entry.CopyFrom(ares_value_utils.create_timestamp(value))
+    return new_struct
+
+def create_float_struct(key: str, value: float) -> ares_struct_pb2.AresStruct:
+    """
+    Creates a new AresStruct with the provided float and key.
+
+    Args:
+        key (str): The associated key to be used when storing the given value.
+        value (float): The double-backed float to be stored in the new AresStruct.
+
+    Returns:
+        (AresStruct): A new AresStruct containing the provided key and value.
+    """
+    new_struct = ares_struct_pb2.AresStruct()
+    new_entry = new_struct.fields[key]
+    new_entry.CopyFrom(ares_value_utils.create_float(value))
+    return new_struct
+
+def create_int_struct(key: str, value: int) -> ares_struct_pb2.AresStruct:
+    """
+    Creates a new AresStruct with the provided int and key.
+
+    Args:
+        key (str): The associated key to be used when storing the given value.
+        value (int): The integer to be stored in the new AresStruct.
+
+    Returns:
+        (AresStruct): A new AresStruct containing the provided key and value.
+    """
+    new_struct = ares_struct_pb2.AresStruct()
+    new_entry = new_struct.fields[key]
+    new_entry.CopyFrom(ares_value_utils.create_int(value))
     return new_struct
 
 def create_bool_struct(key: str, value: bool) -> ares_struct_pb2.AresStruct:
@@ -141,7 +191,7 @@ def add_value_to_struct(existing_struct: ares_struct_pb2.AresStruct, key: str, n
         key (str): The key to be associated with the new value.
         new_value (ares_struct_pb2.AresValue): The AresValue that will be added to the provided struct.
         replace (bool): An optional boolean value that determines whether to overwrite any existing values in your struct.
-    
+
     Returns:
         (AresStruct): The provided struct with the new value appended. 
     """
@@ -186,13 +236,16 @@ def create_ares_struct(key: str, value: Any) -> ares_struct_pb2.AresStruct:
 
     if(isinstance(value, str)):
         return create_string_struct(key, value)
-    
-    elif(isinstance(value, (int, float))):
-        return create_number_struct(key, value)
-    
+
     elif(isinstance(value, bool)):
         return create_bool_struct(key, value)
-    
+
+    elif(isinstance(value, (int, float))):
+        return create_number_struct(key, value)
+
+    elif(isinstance(value, (datetime, timestamp_pb2.Timestamp))):
+        return create_timestamp_struct(key, value)
+
     elif(isinstance(value, bytes)):
         return create_bytes_array_struct(key, value)
     

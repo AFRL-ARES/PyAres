@@ -19,6 +19,9 @@ class AresDataType(Enum):
     UNIT = 11
     FUNCTION = 12
     QUANTITY = 13
+    TIMESTAMP = 14
+    FLOAT = 15
+    INT = 16
 
 class Outcome(Enum):
     UNSPECIFIED_OUTCOME = 0

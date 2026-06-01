@@ -31,6 +31,19 @@ class TestAresDataSchemaUtils(unittest.TestCase):
         )
         self.assertEqual(entry.number_choices.numbers, choices)
 
+    def test_create_entries_for_new_scalar_types(self):
+        for py_type, proto_type in [
+            (AresDataType.TIMESTAMP, ares_data_type_pb2.AresDataType.TIMESTAMP),
+            (AresDataType.FLOAT, ares_data_type_pb2.AresDataType.FLOAT),
+            (AresDataType.INT, ares_data_type_pb2.AresDataType.INT),
+        ]:
+            entry = ares_data_schema_utils.create_settings_schema_entry(
+                py_type,
+                optional=False,
+                choices=[]
+            )
+            self.assertEqual(entry.type, proto_type)
+
     def test_create_entry_with_mixed_choices(self):
         # Should result in no choices being set if types are mixed
         choices = ["A", 1]
