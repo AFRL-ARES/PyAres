@@ -136,6 +136,22 @@ class TestAresDeviceService(unittest.TestCase):
         self.assertFalse(resp_mis.success)
         self.assertIn("parameter count did not match", resp_mis.error)
 
+    def test_command_exception_returns_failed_result(self):
+        """Test that command exceptions do not escape the service."""
+        self.service = AresDeviceService(self.enter_safe_mode_func, self.get_state_func, self.device_name, self.device_desc, self.device_version, port=0)
+
+        def fail():
+            raise RuntimeError("Intentional failure")
+
+        desc = DeviceCommandDescriptor("Fail", "Intentionally fails", {}, {})
+        self.service.add_new_command(desc, fail)
+
+        req = device_service.ExecuteCommandRequest(command_name="Fail")
+        response = self.service._service_wrapper.ExecuteCommand(req, None)
+
+        self.assertFalse(response.success)
+        self.assertIn("Intentional failure", response.error)
+
     def test_state_streaming(self):
         """Test the generator function for state streaming."""
         self.service = AresDeviceService(self.enter_safe_mode_func, self.get_state_func, self.device_name, self.device_desc, self.device_version, port=0)
