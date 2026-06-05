@@ -83,7 +83,12 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
 
       #Convert the protobuf map to a Python dictionary
       provided_param_dict = ares_struct_utils.ares_struct_to_dict(request.arguments)
-      result : Dict[str, Any] = method(**provided_param_dict)
+      try:
+        result : Dict[str, Any] = method(**provided_param_dict)
+      except Exception as e:
+        response.success = False
+        response.error = f"Command '{request.command_name}' failed: {e}"
+        return response
       
       if isinstance(result, dict):
         for key, value in result.items():
