@@ -14,16 +14,18 @@ from ares_datamodel import ares_data_schema_pb2
 from ares_datamodel import ares_struct_pb2
 from google.protobuf import empty_pb2
 
-from .device_models import DeviceCommandDescriptor
+from .device_models import DeviceCommandDescriptor, DeviceCommandResponse, StatusCode
 from ..Utils import ares_device_command_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_struct_utils
 from ..Utils import ares_value_utils
 from ..Utils import ares_data_type_utils
+from ..Utils import device_status_code_utils
 
 # Type hint for the user's custom methods
 EnterSafeModeMethod = Callable[[], None]
-DeviceCommandMethod = Callable[..., Dict[str, Any]]
+AllowedReturns = Union[DeviceCommandResponse, Dict[str, Any], Any]
+DeviceCommandMethod = Callable[..., AllowedReturns]
 DeviceStateMethod = Callable[[], Dict[str, Any]]
 
 class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServicer):
@@ -85,18 +87,44 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       provided_param_dict = ares_struct_utils.ares_struct_to_dict(request.arguments)
       try:
         result : Dict[str, Any] = method(**provided_param_dict)
+
       except Exception as e:
         response.success = False
         response.error = f"Command '{request.command_name}' failed: {e}"
         return response
       
-      if isinstance(result, dict):
-        for key, value in result.items():
+      # Modern devices should respond with a device command response
+      if isinstance(result, DeviceCommandResponse):
+        response.status_code = device_status_code_utils.python_status_code_to_proto_status_code(result.status_code)
+        response.success = device_status_code_utils.determine_success(result.status_code)
+
+        if isinstance(result.response, dict):
+          for key, value in result.response.items():
             ares_struct_utils.add_value_to_struct(response.result.struct_value, key, ares_value_utils.create_ares_value(value))
-      else:
-        response.result.CopyFrom(ares_value_utils.create_ares_value(result))
         
-      response.success = True
+        else:
+          response.result.CopyFrom(ares_value_utils.create_ares_value(result))
+
+      # Legacy device responses will only send back the value as the response, ensure backwards compatability
+      else:        
+        # Keep a backup of the original formatting function
+        formatwarning_orig = warnings.formatwarning
+
+        # Override it to force the source code line to be empty
+        warnings.formatwarning = lambda message, category, filename, lineno, line=None: \
+        formatwarning_orig(message, category, filename, lineno, line='')
+        
+        warnings.warn("Returning raw values or dictionaries directly for device commands is deprecated. The new standard is to return a DeviceCommandResponse object instead. Please consider updating your device to use this standard.", FutureWarning)
+
+        if isinstance(result, dict):
+          for key, value in result.items():
+            ares_struct_utils.add_value_to_struct(response.result.struct_value, key, ares_value_utils.create_ares_value(value))
+
+        else:
+          response.result.CopyFrom(ares_value_utils.create_ares_value(result))
+        
+        response.success = True
+
       return response
 
     else:

@@ -1,4 +1,4 @@
-from PyAres import AresDeviceService, AresDataType, DeviceSchemaEntry, DeviceCommandDescriptor
+from PyAres import *
 
 class RotaryMixer:
     def __init__(self, speed):
@@ -11,12 +11,11 @@ mixer = RotaryMixer(1200)
 def set_speed(rpm: float):
     print(f"Setting motor speed to {rpm}")
     mixer.speed = rpm
-    # Hardware communication goes here...
-    return {} # Return empty dict if no data needs to be sent back
+    return DeviceCommandResponse(None, status_code=StatusCode.COMMAND_SUCCESS) # Return empty dict if no data needs to be sent back
 
 def get_speed():
     print("Hey I got speed")
-    return { "rpm": mixer.speed }
+    return DeviceCommandResponse(mixer.speed, status_code=StatusCode.COMMAND_SUCCESS)
 
 def get_status():
     # Return a dictionary matching your state schema
@@ -37,14 +36,10 @@ service = AresDeviceService(
 
 # 3. Define the 'Set Speed' Command
 # Input: One number (Speed)
-input_schema = { 
-    "rpm": DeviceSchemaEntry(AresDataType.NUMBER, "Speed in RPM", "RPM") 
-}
+input_schema = { "rpm": DeviceSchemaEntry(AresDataType.NUMBER, "Speed in RPM", "RPM") }
 cmd_descriptor = DeviceCommandDescriptor("Set Speed", "Sets mixer speed", input_schema, {})
 
-output_schema = {
-    "rpm": DeviceSchemaEntry(AresDataType.NUMBER, "Speed in RPM", "RPM")
-}
+output_schema = { "rpm": DeviceSchemaEntry(AresDataType.NUMBER, "Speed in RPM", "RPM") }
 get_speed_descriptor = DeviceCommandDescriptor("Get Speed", "Gets mixer speed", {}, output_schema)
 
 # 4. Register the command
