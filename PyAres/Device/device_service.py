@@ -103,7 +103,7 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
             ares_struct_utils.add_value_to_struct(response.result.struct_value, key, ares_value_utils.create_ares_value(value))
         
         else:
-          response.result.CopyFrom(ares_value_utils.create_ares_value(result))
+          response.result.CopyFrom(ares_value_utils.create_ares_value(result.response))
 
       # Legacy device responses will only send back the value as the response, ensure backwards compatability
       else:        
