@@ -57,6 +57,11 @@ class RequestMetadata():
         return cls(default)
 
 @dataclass
+class Limits:
+    minimum: float
+    maximum: float
+
+@dataclass
 class Quantity:
     scalar: float
     type: int # QuantityType enum value

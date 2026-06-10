@@ -21,8 +21,7 @@ from ..Utils import ares_data_schema_utils
 from ..Utils import ares_outcome_utils
 
 # Import python models
-from ..Models import ares_data_models, RequestMetadata
-from ..Models import AresSchemaEntry
+from ..Models import ares_data_models, RequestMetadata, Limits, AresSchemaEntry
 from .analyzer_models import AnalysisRequest, Analysis, InfoResponse
 
 # Type hints for the user's custom logic
@@ -200,7 +199,7 @@ class AresAnalyzerService:
         else:
             self._server.add_insecure_port(f'[::]:{self._port}')
 
-    def add_setting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = [], struct_schema: Optional[Dict[str, AresSchemaEntry]] = None):
+    def add_setting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = [], struct_schema: Optional[Dict[str, AresSchemaEntry]] = None, limits: Optional[Limits] = None):
         """
         Adds an analyzer setting to be reported to ARES when capabilities are requested.
         While most `PyAres.Models.AresDataType` options are supported, bool arrays and byte arrays
@@ -212,8 +211,9 @@ class AresAnalyzerService:
             optional (bool): Whether the setting is optional.
             constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
             struct_schema: An optional dictionary defining the fields of a STRUCT type setting, using AresSchemaEntry objects.
+            limits: An optional limits object used to specify minimum and maximum values for a setting
         """
-        self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, struct_schema)
+        self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, struct_schema, limits)
 
     def add_analysis_parameter(self, parameter_name: str, parameter_type: ares_data_models.AresDataType, optional: bool = False, struct_schema: Optional[Dict[str, AresSchemaEntry]] = None):
         """

@@ -22,7 +22,7 @@ from ..Utils import ares_struct_utils
 from ..Utils import ares_outcome_utils
 
 # Import python models
-from ..Models import ares_data_models
+from ..Models import ares_data_models, Limits
 from .planner_models import *
 
 # Type hint for the user's custom planning logic
@@ -210,7 +210,7 @@ class AresPlannerService:
         """
         self._service_wrapper._planner_options.append(planner_pb2.Planner(planner_name=planner_name, description=planner_description, version=planner_version))
 
-    def add_setting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = []):
+    def add_setting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Optional[Union[list[int], list[str], list[float]]] = [], limits: Optional[Limits] = None):
         """
         Adds a planner setting to be reported to ARES when your services capabilities are requested.
 
@@ -219,8 +219,9 @@ class AresPlannerService:
             setting_type (AresDataType): The type of this settings value.
             optional (bool): Whether the setting is optional.
             constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
+            limits: An optional Limits object for specifying minimum and maximum values
         """
-        self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints)
+        self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, limits=limits)
 
     def add_supported_type(self, type: ares_data_models.AresDataType):
         """

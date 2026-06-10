@@ -1,7 +1,7 @@
 from typing import Union, Dict, Optional, List
 from ares_datamodel import ares_data_schema_pb2
 from ..Models import ares_data_models
-from ..Models.ares_data_models import AresSchemaEntry
+from ..Models.ares_data_models import AresSchemaEntry, Limits
 
 def convert_ares_schema_entry_to_proto(entry: AresSchemaEntry) -> ares_data_schema_pb2.AresValueSchema:
     proto_entry = create_settings_schema_entry(entry.type, entry.optional, entry.choices, entry.struct_schema)
@@ -29,7 +29,8 @@ def create_settings_schema_entry(
     setting_type: ares_data_models.AresDataType, 
     optional: bool, 
     choices: Union[list[str], list[int], list[float]],
-    struct_schema: Optional[Dict[str, AresSchemaEntry]] = None) -> ares_data_schema_pb2.AresValueSchema:
+    struct_schema: Optional[Dict[str, AresSchemaEntry]] = None,
+    limits: Optional[Limits] = None) -> ares_data_schema_pb2.AresValueSchema:
     """
     Creates a protobuf AresValueSchema message from the provided setting details.
 
@@ -55,5 +56,9 @@ def create_settings_schema_entry(
     if struct_schema is not None:
         for key, value in struct_schema.items():
             schema_entry.struct_schema.fields[key].CopyFrom(convert_ares_schema_entry_to_proto(value))
+
+    if limits is not None:
+        schema_entry.limits.minimum = limits.minimum
+        schema_entry.limits.maximum = limits.maximum
 
     return schema_entry
