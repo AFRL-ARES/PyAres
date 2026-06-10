@@ -20,7 +20,7 @@ class AnalysisRequest:
     def __repr__(self) -> str:
         return self.__str__()
 
-class Analysis:
+class AnalysisResponse:
     """ Represents the result of an analysis process. """
 
     def __init__(self, result: float, outcome: Outcome = Outcome.SUCCESS, error_string: str = ""):

@@ -1,8 +1,8 @@
 from .analysis_service import AresAnalyzerService
-from .analyzer_models import Analysis, AnalysisRequest, InfoResponse
+from .analyzer_models import AnalysisResponse, AnalysisRequest, InfoResponse
 
 __all__ = [
-    "Analysis",
+    "AnalysisResponse",
     "AnalysisRequest",
     "InfoResponse",
     "AresAnalyzerService",

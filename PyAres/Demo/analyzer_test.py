@@ -1,6 +1,6 @@
-from PyAres import AresAnalyzerService, AnalysisRequest, Analysis, AresDataType, Outcome
+from PyAres import AresAnalyzerService, AnalysisRequest, AnalysisResponse, AresDataType, Outcome
 
-def analyze(request: AnalysisRequest) -> Analysis:
+def analyze(request: AnalysisRequest) -> AnalysisResponse:
     #Custom Analysis Logic
     temperature = request.inputs.get("Temperature")
 
@@ -10,7 +10,7 @@ def analyze(request: AnalysisRequest) -> Analysis:
 
     print(f"Temperature: {temperature}")
 
-    analysis = Analysis(result=temperature)
+    analysis = AnalysisResponse(result=temperature)
     return analysis
 
 

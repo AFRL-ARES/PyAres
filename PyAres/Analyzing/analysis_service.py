@@ -23,10 +23,10 @@ from ..Utils import ares_outcome_utils
 # Import python models
 from ..Models import ares_data_models, RequestMetadata
 from ..Models import AresSchemaEntry
-from .analyzer_models import AnalysisRequest, Analysis, InfoResponse
+from .analyzer_models import AnalysisRequest, AnalysisResponse, InfoResponse
 
 # Type hints for the user's custom logic
-AnalyzeLogicFunction = Callable[[AnalysisRequest], Union[Analysis, Awaitable[Analysis]]]
+AnalyzeLogicFunction = Callable[[AnalysisRequest], Union[AnalysisResponse, Awaitable[AnalysisResponse]]]
 
 class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerServiceServicer):
     """
@@ -73,7 +73,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             if isinstance(python_response, Awaitable):
                 python_response = python_response.__await__()
 
-            if not isinstance(python_response, Analysis):
+            if not isinstance(python_response, AnalysisResponse):
                 print("Analysis response was an invalid type, ")
                 proto_analysis.analysis_outcome = ares_outcome_enum_pb2.FAILURE
                 proto_analysis.error_string = "The user's custom analysis logic returned an invalid type, analysis cannot be processed"
