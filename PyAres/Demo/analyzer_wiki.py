@@ -27,6 +27,10 @@ if __name__ == "__main__":
 
     # Define what data we need from ARES
     service.add_analysis_parameter("Growth_Metric", AresDataType.NUMBER)
-    service.add_setting("Random Setting", AresDataType.NUMBER, 250, False, None, None, Limits(1, 500))
+    
+    service.add_setting("Random Setting", AresDataType.NUMBER, 
+                        default_value=250, 
+                        limits=Limits(1, 500),
+                        description="This is a random setting, it is purely for demonstration purposes")
 
     service.start()

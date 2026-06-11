@@ -217,7 +217,8 @@ class AresPlannerService:
                     default_value: Optional[Any] = None, 
                     optional: Optional[bool] = True, 
                     constraints: Optional[Union[list[int], list[str], list[float]]] = [], 
-                    limits: Optional[Limits] = None):
+                    limits: Optional[Limits] = None,
+                    description: Optional[str] = None):
         """
         Adds a planner setting to be reported to ARES when your services capabilities are requested.
 
@@ -228,14 +229,15 @@ class AresPlannerService:
             optional (bool): Whether the setting is optional.
             constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
             limits: An optional Limits object for specifying minimum and maximum values
+            description: An optional string to describe your setting in more detail. Appears in ARES as a tooltip in the settings menu.
         """
         try:
             if default_value is not None:
                 default_ares_value = ares_value_utils.create_ares_value(default_value)
-                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, default_value=default_ares_value)
+                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, default_value=default_ares_value, description=description)
 
             else:
-                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits)
+                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, description=description)
         
         except Exception as e:
             print(f"Encountered an exception while adding setting {setting_name}: {e}")

@@ -70,12 +70,12 @@ if __name__ == "__main__":
   pythonDemoPlanner.add_planner_option("Gradual Planner", "A planner that gradually increases a value based on the values history", "1.0.0")
 
   #Add Planner Settings
-  pythonDemoPlanner.add_setting("String Setting", AresDataType.STRING, default_value="Default dood")
-  pythonDemoPlanner.add_setting("Number Setting", AresDataType.NUMBER, default_value=100.0)
-  pythonDemoPlanner.add_setting("Boolean Setting", AresDataType.BOOLEAN, default_value=False)
-  pythonDemoPlanner.add_setting("String Array Setting", AresDataType.STRING_ARRAY, default_value=["One", "Two", "Three"])
+  pythonDemoPlanner.add_setting("String Setting", AresDataType.STRING, default_value="Default String", description="This is a string setting")
+  pythonDemoPlanner.add_setting("Number Setting", AresDataType.NUMBER, default_value=100.0, description="This is a number setting")
+  pythonDemoPlanner.add_setting("Boolean Setting", AresDataType.BOOLEAN, description="This is a boolean setting")
+  pythonDemoPlanner.add_setting("String Array Setting", AresDataType.STRING_ARRAY, description="This is a string array setting")
   pythonDemoPlanner.add_setting("Constrained Strings", AresDataType.STRING_ARRAY, optional=True, constraints=["One", "Two", "Three"])
-  pythonDemoPlanner.add_setting("Number Array Setting", AresDataType.NUMBER_ARRAY, default_value=[1, 2, 3, 4, 5])
+  pythonDemoPlanner.add_setting("Number Array Setting", AresDataType.NUMBER_ARRAY, description="This is a number array setting")
   pythonDemoPlanner.add_setting("Constrained Numbers", AresDataType.NUMBER_ARRAY, optional=True, constraints=[1, 2, 3])
 
   #Set Planner Timeout

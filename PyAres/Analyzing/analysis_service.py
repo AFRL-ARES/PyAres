@@ -199,13 +199,15 @@ class AresAnalyzerService:
         else:
             self._server.add_insecure_port(f'[::]:{self._port}')
 
-    def add_setting(self, setting_name: str, 
+    def add_setting(self, 
+                    setting_name: str, 
                     setting_type: ares_data_models.AresDataType,
                     default_value: Any = None, 
                     optional: bool = True, 
                     constraints: Union[list[int], list[str], list[float]] = [], 
                     struct_schema: Optional[Dict[str, AresSchemaEntry]] = None, 
-                    limits: Optional[Limits] = None):
+                    limits: Optional[Limits] = None,
+                    description: Optional[str] = None):
         """
         Adds an analyzer setting to be reported to ARES when capabilities are requested.
         While most `PyAres.Models.AresDataType` options are supported, bool arrays and byte arrays
@@ -218,6 +220,7 @@ class AresAnalyzerService:
             constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
             struct_schema: An optional dictionary defining the fields of a STRUCT type setting, using AresSchemaEntry objects.
             limits: An optional limits object used to specify minimum and maximum values for a setting
+            description: An optional string to describe your setting in more detail. Appears in ARES as a tooltip in the settings menu.
         """
         try:
             if default_value is not None:
@@ -227,10 +230,16 @@ class AresAnalyzerService:
                                                                                                                     choices=constraints, 
                                                                                                                     struct_schema=struct_schema, 
                                                                                                                     limits=limits, 
-                                                                                                                    default_value=default_ares_value)
+                                                                                                                    default_value=default_ares_value,
+                                                                                                                    description=description)
         
             else:
-                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, struct_schema, limits)
+                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type=setting_type, 
+                                                                                                                    optional=optional, 
+                                                                                                                    choices=constraints, 
+                                                                                                                    struct_schema=struct_schema, 
+                                                                                                                    limits=limits,
+                                                                                                                    description=description)
         
         except Exception as e:
             print(f"Encountered an exception while adding setting {setting_name}: {e}")

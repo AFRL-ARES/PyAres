@@ -31,7 +31,8 @@ def create_settings_schema_entry(
     default_value: Any = None,
     choices: Union[list[str], list[int], list[float]] = None,
     struct_schema: Optional[Dict[str, AresSchemaEntry]] = None,
-    limits: Optional[Limits] = None) -> ares_data_schema_pb2.AresValueSchema:
+    limits: Optional[Limits] = None,
+    description: Optional[str] = None) -> ares_data_schema_pb2.AresValueSchema:
     """
     Creates a protobuf AresValueSchema message from the provided setting details.
 
@@ -61,6 +62,9 @@ def create_settings_schema_entry(
     if limits is not None:
         schema_entry.limits.minimum = limits.minimum
         schema_entry.limits.maximum = limits.maximum
+
+    if description is not None:
+        schema_entry.description = description
 
     if isinstance(default_value, ares_struct_pb2.AresValue):
         schema_entry.default_value.CopyFrom(default_value)
