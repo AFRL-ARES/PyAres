@@ -275,7 +275,13 @@ class AresDeviceService:
     self._service_wrapper._command_methods[cmd_descriptor.name] = method
     self._service_wrapper._commands.append(cmd_descriptor)
 
-  def add_setting(self, setting_name: str, setting_value: Optional[Any] = None, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = [], limits: Optional[Limits] = None):
+  def add_setting(self, 
+                  setting_name: str, 
+                  setting_value: Optional[Any] = None, 
+                  optional: bool = True, 
+                  constraints: Union[list[int], list[str], list[float]] = [], 
+                  limits: Optional[Limits] = None,
+                  description: Optional[str] = None):
     """
     Adds a new device setting to be reported to ARES when your devices capabilities are requested.
 
@@ -285,17 +291,18 @@ class AresDeviceService:
       optional (bool): Whether the setting is optional
       constraints: An optional list of values to constrain the available setting choices. Can be integers, floats, or strings.
       limits: An optional Limits object for specifying minimum and maximum values
+      description: An optional string to describe your setting in more detail. Appears in ARES as a tooltip in the settings menu.
     """
     try:
       setting_type = ares_data_type_utils.determine_python_ares_data_type(setting_value)
       new_ares_value = ares_value_utils.create_ares_value(setting_value)
     
-      self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, default_value=new_ares_value)
+      self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, default_value=new_ares_value, description=description)
       self._service_wrapper._current_settings[setting_name] = new_ares_value
     
     except Exception as e:
       print(f"Exception when trying to create setting {setting_name}: {e}")
-      
+
   def start(self, wait_for_termination: bool = True):
     """ 
     Starts the service on the specified port, and waits for termination. 
