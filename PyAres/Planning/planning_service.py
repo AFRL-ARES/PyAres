@@ -13,6 +13,7 @@ from ares_datamodel import ares_data_type_pb2
 from ares_datamodel import ares_outcome_enum_pb2
 from ares_datamodel.connection import connection_state_pb2
 from ares_datamodel.connection import connection_info_pb2
+from ares_datamodel import ares_struct_pb2
 
 # Import Utilities
 from ..Utils import ares_value_utils
@@ -38,6 +39,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         self._description: str = description
         self._version: str = version
         self._settings: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
+        self._current_settings: Dict[str, ares_struct_pb2.AresValue] = {}
         self._planner_options: list[planner_pb2.Planner] = []
         self._supported_types: list[ares_data_type_pb2.AresDataType] = []
         self._timeout: int = timeout
@@ -210,18 +212,29 @@ class AresPlannerService:
         """
         self._service_wrapper._planner_options.append(planner_pb2.Planner(planner_name=planner_name, description=planner_description, version=planner_version))
 
-    def add_setting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Optional[Union[list[int], list[str], list[float]]] = [], limits: Optional[Limits] = None):
+    def add_setting(self, setting_name: str, 
+                    setting_type: ares_data_models.AresDataType, 
+                    default_value: Optional[Any] = None, 
+                    optional: Optional[bool] = True, 
+                    constraints: Optional[Union[list[int], list[str], list[float]]] = [], 
+                    limits: Optional[Limits] = None):
         """
         Adds a planner setting to be reported to ARES when your services capabilities are requested.
 
         Args:
             setting_name (str): The name of the setting.
             setting_type (AresDataType): The type of this settings value.
+            default_value: The default value you want to be associated with this setting. Value must match the provided data type, and will be overwritten by ARES if it has another value stored.
             optional (bool): Whether the setting is optional.
             constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
             limits: An optional Limits object for specifying minimum and maximum values
         """
-        self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, limits=limits)
+        if default_value is not None:
+            default_ares_value = ares_value_utils.create_ares_value(default_value)
+            self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, default_value=default_ares_value)
+
+        else:
+            self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits)
 
     def add_supported_type(self, type: ares_data_models.AresDataType):
         """

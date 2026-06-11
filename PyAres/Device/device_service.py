@@ -275,7 +275,7 @@ class AresDeviceService:
     self._service_wrapper._command_methods[cmd_descriptor.name] = method
     self._service_wrapper._commands.append(cmd_descriptor)
 
-  def add_setting(self, setting_name: str, setting_value: Any, optional: Optional[bool] = True, constraints: Optional[Union[list[int], list[str], list[float]]] = [], limits: Optional[Limits] = None):
+  def add_setting(self, setting_name: str, setting_value: Optional[Any] = None, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = [], limits: Optional[Limits] = None):
     """
     Adds a new device setting to be reported to ARES when your devices capabilities are requested.
 
@@ -288,6 +288,7 @@ class AresDeviceService:
     """
     setting_type = ares_data_type_utils.determine_python_ares_data_type(setting_value)
     self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, limits=limits)
+    
     new_ares_value = ares_value_utils.create_ares_value(setting_value)
     self._service_wrapper._current_settings[setting_name] = new_ares_value
 
@@ -301,6 +302,7 @@ class AresDeviceService:
       Setting this value to false will allow you to continue execution after starting your service, however this should ONLY be done if you have
       another mechanism for keeping your process alive (such as a GUI, or a loop). Defaults to true.
     """
+    
     print(f"Starting Ares Device Service on port {self._port}...")
     self._server.start()
 
