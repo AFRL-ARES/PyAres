@@ -56,10 +56,10 @@ class RequestMetadata():
         default = request_metadata_pb2.RequestMetadata(system_name="TEST SYSTEM", campaign_name="TEST CAMPAIGN", campaign_id="TEST ID", experiment_id="TEST EXPERIMENT ID")
         return cls(default)
 
-@dataclass
 class Limits:
-    minimum: float
-    maximum: float
+    def __init__(self, minimum: float, maximum: float):
+        self.minimum = minimum
+        self.maximum = maximum
 
 @dataclass
 class Quantity:

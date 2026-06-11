@@ -1,4 +1,4 @@
-from PyAres import AresAnalyzerService, AnalysisRequest, Analysis, AresDataType, Outcome
+from PyAres import AresAnalyzerService, AnalysisRequest, Analysis, AresDataType, Outcome, Limits
 
 def analyze_sample(request: AnalysisRequest) -> Analysis:
     # 1. Extract inputs
@@ -27,5 +27,6 @@ if __name__ == "__main__":
 
     # Define what data we need from ARES
     service.add_analysis_parameter("Growth_Metric", AresDataType.NUMBER)
+    service.add_setting("Random Setting", AresDataType.FLOAT, False, None, None, Limits(1, 500))
 
     service.start()
