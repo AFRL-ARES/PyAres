@@ -286,12 +286,16 @@ class AresDeviceService:
       constraints: An optional list of values to constrain the available setting choices. Can be integers, floats, or strings.
       limits: An optional Limits object for specifying minimum and maximum values
     """
-    setting_type = ares_data_type_utils.determine_python_ares_data_type(setting_value)
-    self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, limits=limits)
+    try:
+      setting_type = ares_data_type_utils.determine_python_ares_data_type(setting_value)
+      new_ares_value = ares_value_utils.create_ares_value(setting_value)
     
-    new_ares_value = ares_value_utils.create_ares_value(setting_value)
-    self._service_wrapper._current_settings[setting_name] = new_ares_value
-
+      self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, default_value=new_ares_value)
+      self._service_wrapper._current_settings[setting_name] = new_ares_value
+    
+    except Exception as e:
+      print(f"Exception when trying to create setting {setting_name}: {e}")
+      
   def start(self, wait_for_termination: bool = True):
     """ 
     Starts the service on the specified port, and waits for termination. 
@@ -302,7 +306,7 @@ class AresDeviceService:
       Setting this value to false will allow you to continue execution after starting your service, however this should ONLY be done if you have
       another mechanism for keeping your process alive (such as a GUI, or a loop). Defaults to true.
     """
-    
+
     print(f"Starting Ares Device Service on port {self._port}...")
     self._server.start()
 

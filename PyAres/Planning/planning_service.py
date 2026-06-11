@@ -229,12 +229,16 @@ class AresPlannerService:
             constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
             limits: An optional Limits object for specifying minimum and maximum values
         """
-        if default_value is not None:
-            default_ares_value = ares_value_utils.create_ares_value(default_value)
-            self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, default_value=default_ares_value)
+        try:
+            if default_value is not None:
+                default_ares_value = ares_value_utils.create_ares_value(default_value)
+                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, default_value=default_ares_value)
 
-        else:
-            self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits)
+            else:
+                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits)
+        
+        except Exception as e:
+            print(f"Encountered an exception while adding setting {setting_name}: {e}")
 
     def add_supported_type(self, type: ares_data_models.AresDataType):
         """

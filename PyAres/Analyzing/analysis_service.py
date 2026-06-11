@@ -219,19 +219,21 @@ class AresAnalyzerService:
             struct_schema: An optional dictionary defining the fields of a STRUCT type setting, using AresSchemaEntry objects.
             limits: An optional limits object used to specify minimum and maximum values for a setting
         """
-
-        if default_value is not None:
-            default_ares_value = ares_value_utils.create_ares_value(default_value)
-            self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type=setting_type, 
-                                                                                                                optional=optional, 
-                                                                                                                choices=constraints, 
-                                                                                                                struct_schema=struct_schema, 
-                                                                                                                limits=limits, 
-                                                                                                                default_value=default_ares_value)
+        try:
+            if default_value is not None:
+                default_ares_value = ares_value_utils.create_ares_value(default_value)
+                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type=setting_type, 
+                                                                                                                    optional=optional, 
+                                                                                                                    choices=constraints, 
+                                                                                                                    struct_schema=struct_schema, 
+                                                                                                                    limits=limits, 
+                                                                                                                    default_value=default_ares_value)
         
-        else:
-            self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, struct_schema, limits)
-
+            else:
+                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, struct_schema, limits)
+        
+        except Exception as e:
+            print(f"Encountered an exception while adding setting {setting_name}: {e}")
 
     def add_analysis_parameter(self, parameter_name: str, parameter_type: ares_data_models.AresDataType, optional: bool = False, struct_schema: Optional[Dict[str, AresSchemaEntry]] = None):
         """
@@ -265,7 +267,7 @@ class AresAnalyzerService:
             Setting this value to false will allow you to continue execution after starting your service, however this should ONLY be done if you have
             another mechanism for keeping your process alive (such as a GUI, or a loop). Defaults to true.
         """
-        print(f"Starting Ares Analyzer Service on port {self._port}...")
+        print(f"Starting Ares Analysis Service on port {self._port}...")
         self._server.start()
 
         if wait_for_termination:
