@@ -45,6 +45,6 @@ if __name__ == "__main__":
   device_service.add_new_command(get_temp_desc, device.get_temperature)
 
   #Add Settings
-  device_service.add_setting("Allow Negative Values", True)
+  device_service.add_setting("Allow Negative Values", True, description="A boolean value that determines whether the test device allows negative values")
 
   device_service.start()

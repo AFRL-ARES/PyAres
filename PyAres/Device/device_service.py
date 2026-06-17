@@ -152,6 +152,7 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       settings_entry = response.schema.fields[key]
       settings_entry.type = value.type
       settings_entry.optional = value.optional
+      settings_entry.description = value.description
 
       if len(value.string_choices.strings) != 0:
         settings_entry.string_choices.strings.extend(value.string_choices.strings)
