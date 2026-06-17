@@ -11,10 +11,10 @@ class DemoDevice:
   def set_temperature(self, temperature: float):
     self.temperature = temperature
     time.sleep(5)
-    return {}
+    return DeviceCommandResponse(None, status_code=StatusCode.COMMAND_SUCCESS)
 
   def get_temperature(self):
-    return { "temperature": self.temperature }
+    return DeviceCommandResponse(self.temperature, status_code=StatusCode.COMMAND_SUCCESS)
   
   def get_device_state(self) -> Dict:
     state_dict = { "temperature": self.temperature }

@@ -16,7 +16,7 @@ class ParameterHistoryItem:
     def __str__(self):
         return (f"ParameterHistoryItem object with:\n"
                 f" planned_value: {self.planned_value}\n"
-                f" acheived_value: {self.achieved_value}\n")
+                f" achieved_value: {self.achieved_value}\n")
     
     def __repr__(self) -> str:
         return self.__str__()

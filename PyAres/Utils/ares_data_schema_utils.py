@@ -4,7 +4,7 @@ from ..Models import ares_data_models
 from ..Models.ares_data_models import AresSchemaEntry, Limits
 
 def convert_ares_schema_entry_to_proto(entry: AresSchemaEntry) -> ares_data_schema_pb2.AresValueSchema:
-    proto_entry = create_settings_schema_entry(entry.type, entry.optional, entry.choices, entry.struct_schema)
+    proto_entry = create_settings_schema_entry(setting_type=entry.type, optional=entry.optional, choices=entry.choices, struct_schema=entry.struct_schema)
     proto_entry.description = entry.description
     
     if entry.quantity_schema:
@@ -20,6 +20,7 @@ def convert_ares_schema_entry_to_proto(entry: AresSchemaEntry) -> ares_data_sche
 
     if entry.min_number_value is not None:
         proto_entry.min_number_value = entry.min_number_value
+
     if entry.max_number_value is not None:
         proto_entry.max_number_value = entry.max_number_value
 

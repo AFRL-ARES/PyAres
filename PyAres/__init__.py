@@ -10,6 +10,8 @@ from .Analyzing import InfoResponse
 from .Device import AresDeviceService
 from .Device import DeviceCommandDescriptor
 from .Device import DeviceSchemaEntry
+from .Device import DeviceCommandResponse
+from .Device import StatusCode
 from .Models import AresDataType
 from .Models import Outcome
 from .Models import AresSchemaEntry

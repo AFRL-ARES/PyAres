@@ -1,10 +1,15 @@
-from typing import Dict, Union, Optional
+from enum import Enum
+from dataclasses import dataclass, field
+from typing import Dict, Union, Optional, Any
 from ..Models import ares_data_models
 
 class DeviceSchemaEntry:
   """ A class that describes an input or output parameter for a device command """
 
-  def __init__(self, type: ares_data_models.AresDataType, description: str = "", unit: str = "", optional: bool = False, 
+  def __init__(self, type: ares_data_models.AresDataType, 
+               description: str = "", 
+               unit: str = "", 
+               optional: bool = False, 
                constraints: Union[list[int], list[float], list[str]] = [],
                quantity_schema: Optional[ares_data_models.QuantitySchema] = None,
                struct_schema: Optional[Dict[str, 'DeviceSchemaEntry']] = None,
@@ -54,3 +59,20 @@ class DeviceCommandDescriptor:
     self.description = description
     self.input_schema = input_schema
     self.output_schema = output_schema
+
+class StatusCode(Enum):
+    STATUS_UNSPECIFIED = 0
+    COMMAND_SUCCESS = 1
+    SUCCESS_WITH_WARNINGS = 2
+    COMMAND_FAILED = 3
+    INVALID_COMMAND = 4
+    HARDWARE_FAULT = 5
+    EMERGENCY_STOP = 6
+    OUT_OF_RANGE = 7
+    PARAMETERS_UNACHIEVEABLE = 8
+
+@dataclass
+class DeviceCommandResponse:
+    response: Union[Dict[str, Any], Any]
+    error_string: str = ""
+    status_code: StatusCode = StatusCode.STATUS_UNSPECIFIED
