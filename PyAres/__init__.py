@@ -4,7 +4,7 @@ from .Planning import PlanRequest
 from .Planning import PlanningParameter
 from .Planning import ParameterHistoryItem
 from .Analyzing import AresAnalyzerService
-from .Analyzing import Analysis
+from .Analyzing import AnalysisResponse
 from .Analyzing import AnalysisRequest
 from .Analyzing import InfoResponse
 from .Device import AresDeviceService

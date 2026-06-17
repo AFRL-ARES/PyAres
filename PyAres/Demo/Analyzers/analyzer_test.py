@@ -1,6 +1,6 @@
-from PyAres import AresAnalyzerService, AnalysisRequest, Analysis, AresDataType, Outcome, Limits
+from PyAres import AresAnalyzerService, AnalysisRequest, AnalysisResponse, AresDataType, Outcome, Limits
 
-def analyze(request: AnalysisRequest) -> Analysis:
+def analyze(request: AnalysisRequest) -> AnalysisResponse:
     #Custom Analysis Logic
     temp_one = request.inputs.get("Temperature One")
     print("Processing Analysis Request")
@@ -13,15 +13,7 @@ def analyze(request: AnalysisRequest) -> Analysis:
     else:
         print(f"Temperature One: {temp_one}")
     
-    # if not isinstance(temp_two, float):
-    #     print("Temperature Two was not a float")
-    #     print(temp_two)
-    #     temp_two = 0.0
-
-    # else:
-    #     print(f"Temperature Two: {temp_two}")
-
-    analysis = Analysis(result=temp_one)
+    analysis = AnalysisResponse(result=temp_one)
     return analysis
 
 

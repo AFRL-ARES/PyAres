@@ -166,7 +166,7 @@ class PlanResponse:
                  parameter_names: Optional[list[str]] = None,
                  parameter_values: Optional[list] = None,
                  parameter_data: Optional[dict[str,Any]] = None,
-                 planning_outcome: Outcome = Outcome.SUCCESS, 
+                 outcome: Outcome = Outcome.SUCCESS, 
                  error_string: str = ""):
         """
         Initializes a PlanResponse. Using either lists of names and values or a python dictonary of name:value pairs
@@ -189,7 +189,7 @@ class PlanResponse:
         else:
              raise ValueError("No values to assign!")
         
-        self.outcome = planning_outcome
+        self.outcome = outcome
         self.error_string = error_string
     
     def __str__(self):
