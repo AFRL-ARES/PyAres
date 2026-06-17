@@ -59,10 +59,10 @@ Analyzers can be initialized using the AresAnalyzerService class. Below is a bas
 ```Python
 from PyAres import AresAnalyzerService
 from PyAres import AnalysisRequest
-from PyAres import Analysis
+from PyAres import AnalysisResponse
 from PyAres import AresDataType
 
-def analyze(request: AnalysisRequest) -> Analysis:
+def analyze(request: AnalysisRequest) -> AnalysisResponse:
     #Custom Analysis Logic
     growth = request.inputs.get("Growth")
     temperature = request.inputs.get("Temperature")
@@ -70,7 +70,7 @@ def analyze(request: AnalysisRequest) -> Analysis:
     print(f"Growth: {growth}")
     print(f"Temperature: {temperature}")
 
-    analysis = Analysis(result=growth, success=True)
+    analysis = AnalysisResponse(result=growth, success=True)
     return analysis
 
 

@@ -1,6 +1,6 @@
 import random
 
-from PyAres import AresDeviceService, AresDataType, DeviceSchemaEntry, DeviceCommandDescriptor
+from PyAres import AresDeviceService, AresDataType, DeviceSchemaEntry, DeviceCommandDescriptor, DeviceCommandResponse, StatusCode
 
 
 # --- PART 1: The Simulated Hardware ---
@@ -12,7 +12,8 @@ class VirtualRandomNumberDevice:
         """Simulates reading a random value from hardware."""
         self.last_number = random.randint(1, 100)
         print(f"[Hardware] Generated random number: {self.last_number}")
-        return {"random_number": self.last_number}
+        response = DeviceCommandResponse({"random_number": self.last_number}, status_code=StatusCode.COMMAND_SUCCESS)
+        return response
 
     def get_state(self):
         """Required: Tells ARES the current status for logging."""

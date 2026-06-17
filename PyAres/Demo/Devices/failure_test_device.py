@@ -3,7 +3,7 @@ import random
 from PyAres import AresDeviceService, AresDataType, DeviceCommandDescriptor, DeviceSchemaEntry
 
 
-class TestDevice:
+class FailureTestDevice:
     def fail(self):
         """Intentionally fails so command failure handling can be tested."""
         print("[Test Device] Running intentionally failing command...")
@@ -26,7 +26,7 @@ class TestDevice:
 
 
 if __name__ == "__main__":
-    test_device = TestDevice()
+    test_device = FailureTestDevice()
 
     service = AresDeviceService(
         test_device.safe_mode,

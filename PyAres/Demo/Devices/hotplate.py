@@ -1,4 +1,4 @@
-from PyAres import AresDeviceService, AresDataType, DeviceSchemaEntry, DeviceCommandDescriptor
+from PyAres import *
 
 # --- PART 1: The Simulated Hardware ---
 class VirtualHotplate:
@@ -8,14 +8,16 @@ class VirtualHotplate:
     def set_temperature(self, temp: float):
         """Simulates setting the heater."""
         print(f"[Hardware] Heating to {temp}°C...")
+        response = DeviceCommandResponse(None, status_code=StatusCode.COMMAND_SUCCESS)
         self.target_temp = temp
-        return {} # Return empty dict if no data needs to be sent back
+        return response
 
     def get_temperature(self):
         """Simulates reading the sensor."""
+        response = DeviceCommandResponse({ "current_temp": self.target_temp }, status_code=StatusCode.COMMAND_SUCCESS)
         # In a real device, you'd read a serial port here.
         print("[Hardware] Retrieving the current temperature...")
-        return { "current_temp": self.target_temp }
+        return response
 
     def get_state(self):
         """Required: Tells ARES the current status for logging."""

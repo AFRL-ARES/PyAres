@@ -1,7 +1,7 @@
 import unittest
 from PyAres import AresAnalyzerService, Outcome
 from PyAres.Models import ares_data_models
-from PyAres.Analyzing.analyzer_models import AnalysisRequest, Analysis
+from PyAres.Analyzing.analyzer_models import AnalysisRequest, AnalysisResponse
 from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2 as analyzer_service
 from ares_datamodel.analyzing import analysis_pb2
 from ares_datamodel import ares_data_type_pb2, ares_outcome_enum_pb2, ares_data_schema_pb2
@@ -28,11 +28,11 @@ class TestAresAnalyzerService(unittest.TestCase):
     def setUp(self):
         self.captured_request: AnalysisRequest | None = None
 
-        def dummy_analyze(request: AnalysisRequest) -> Analysis:
+        def dummy_analyze(request: AnalysisRequest) -> AnalysisResponse:
             self.captured_request = request
             
             # Return a valid Analysis object
-            return Analysis(
+            return AnalysisResponse(
                 result=100.0,
                 outcome=Outcome.SUCCESS
             )

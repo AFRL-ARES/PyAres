@@ -3,7 +3,7 @@ import inspect
 import time
 import warnings
 from concurrent import futures
-from typing import Dict, Callable, Awaitable, Union, Any
+from typing import Dict, Callable, Awaitable, Union, Any, Optional
 
 from ares_datamodel.device.remote import ares_remote_device_service_pb2 as device_service
 from ares_datamodel.device.remote import ares_remote_device_service_pb2_grpc as device_service_grpc
@@ -15,15 +15,19 @@ from ares_datamodel import ares_struct_pb2
 from google.protobuf import empty_pb2
 
 from .device_models import DeviceCommandDescriptor
+from ..Models import Limits
+from .device_models import DeviceCommandDescriptor, DeviceCommandResponse, StatusCode
 from ..Utils import ares_device_command_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_struct_utils
 from ..Utils import ares_value_utils
 from ..Utils import ares_data_type_utils
+from ..Utils import device_status_code_utils
 
 # Type hint for the user's custom methods
 EnterSafeModeMethod = Callable[[], None]
-DeviceCommandMethod = Callable[..., Dict[str, Any]]
+AllowedReturns = Union[DeviceCommandResponse, Dict[str, Any], Any]
+DeviceCommandMethod = Callable[..., AllowedReturns]
 DeviceStateMethod = Callable[[], Dict[str, Any]]
 
 class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServicer):
@@ -85,18 +89,44 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       provided_param_dict = ares_struct_utils.ares_struct_to_dict(request.arguments)
       try:
         result : Dict[str, Any] = method(**provided_param_dict)
+
       except Exception as e:
         response.success = False
         response.error = f"Command '{request.command_name}' failed: {e}"
         return response
       
-      if isinstance(result, dict):
-        for key, value in result.items():
+      # Modern devices should respond with a device command response
+      if isinstance(result, DeviceCommandResponse):
+        response.status_code = device_status_code_utils.python_status_code_to_proto_status_code(result.status_code)
+        response.success = device_status_code_utils.determine_success(result.status_code)
+
+        if isinstance(result.response, dict):
+          for key, value in result.response.items():
             ares_struct_utils.add_value_to_struct(response.result.struct_value, key, ares_value_utils.create_ares_value(value))
-      else:
-        response.result.CopyFrom(ares_value_utils.create_ares_value(result))
         
-      response.success = True
+        else:
+          response.result.CopyFrom(ares_value_utils.create_ares_value(result.response))
+
+      # Legacy device responses will only send back the value as the response, ensure backwards compatability
+      else:        
+        # Keep a backup of the original formatting function
+        formatwarning_orig = warnings.formatwarning
+
+        # Override it to force the source code line to be empty
+        warnings.formatwarning = lambda message, category, filename, lineno, line=None: \
+        formatwarning_orig(message, category, filename, lineno, line='')
+        
+        warnings.warn("Returning raw values or dictionaries directly for device commands is deprecated. The new standard is to return a DeviceCommandResponse object instead. Please consider updating your device to use this standard.", FutureWarning)
+
+        if isinstance(result, dict):
+          for key, value in result.items():
+            ares_struct_utils.add_value_to_struct(response.result.struct_value, key, ares_value_utils.create_ares_value(value))
+
+        else:
+          response.result.CopyFrom(ares_value_utils.create_ares_value(result))
+        
+        response.success = True
+
       return response
 
     else:
@@ -122,6 +152,7 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
       settings_entry = response.schema.fields[key]
       settings_entry.type = value.type
       settings_entry.optional = value.optional
+      settings_entry.description = value.description
 
       if len(value.string_choices.strings) != 0:
         settings_entry.string_choices.strings.extend(value.string_choices.strings)
@@ -274,7 +305,13 @@ class AresDeviceService:
     self._service_wrapper._command_methods[cmd_descriptor.name] = method
     self._service_wrapper._commands.append(cmd_descriptor)
 
-  def add_setting(self, setting_name: str, setting_value: Any, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = []):
+  def add_setting(self, 
+                  setting_name: str, 
+                  setting_value: Optional[Any] = None, 
+                  optional: bool = True, 
+                  constraints: Union[list[int], list[str], list[float]] = [], 
+                  limits: Optional[Limits] = None,
+                  description: Optional[str] = None):
     """
     Adds a new device setting to be reported to ARES when your devices capabilities are requested.
 
@@ -283,11 +320,18 @@ class AresDeviceService:
       setting_value (Any): The default value of the setting
       optional (bool): Whether the setting is optional
       constraints: An optional list of values to constrain the available setting choices. Can be integers, floats, or strings.
+      limits: An optional Limits object for specifying minimum and maximum values
+      description: An optional string to describe your setting in more detail. Appears in ARES as a tooltip in the settings menu.
     """
-    setting_type = ares_data_type_utils.determine_python_ares_data_type(setting_value)
-    self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints)
-    new_ares_value = ares_value_utils.create_ares_value(setting_value)
-    self._service_wrapper._current_settings[setting_name] = new_ares_value
+    try:
+      setting_type = ares_data_type_utils.determine_python_ares_data_type(setting_value)
+      new_ares_value = ares_value_utils.create_ares_value(setting_value)
+    
+      self._service_wrapper._setting_schema[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, choices=constraints, limits=limits, default_value=new_ares_value, description=description)
+      self._service_wrapper._current_settings[setting_name] = new_ares_value
+    
+    except Exception as e:
+      print(f"Exception when trying to create setting {setting_name}: {e}")
 
   def start(self, wait_for_termination: bool = True):
     """ 
@@ -299,6 +343,7 @@ class AresDeviceService:
       Setting this value to false will allow you to continue execution after starting your service, however this should ONLY be done if you have
       another mechanism for keeping your process alive (such as a GUI, or a loop). Defaults to true.
     """
+
     print(f"Starting Ares Device Service on port {self._port}...")
     self._server.start()
 

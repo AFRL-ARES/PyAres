@@ -1,7 +1,7 @@
 # Standard Imports
 import grpc
 from concurrent import futures
-from typing import Callable, Awaitable, Union, Mapping, Dict, Optional
+from typing import Callable, Awaitable, Union, Mapping, Dict, Optional, Any
 
 # Import generated protobuf and gRPC stubs
 from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2 as analyzer_service
@@ -11,7 +11,6 @@ from ares_datamodel.analyzing import analyzer_capabilities_pb2
 from ares_datamodel.connection import connection_state_pb2
 from ares_datamodel.connection import connection_status_pb2
 from ares_datamodel.connection import connection_info_pb2
-from ares_datamodel import ares_data_type_pb2
 from ares_datamodel import ares_data_schema_pb2
 from ares_datamodel import ares_outcome_enum_pb2
 
@@ -19,14 +18,14 @@ from ares_datamodel import ares_outcome_enum_pb2
 from ..Utils import ares_struct_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_outcome_utils
+from ..Utils import ares_value_utils
 
 # Import python models
-from ..Models import ares_data_models, RequestMetadata
-from ..Models import AresSchemaEntry
-from .analyzer_models import AnalysisRequest, Analysis, InfoResponse
+from ..Models import ares_data_models, RequestMetadata, Limits, AresSchemaEntry
+from .analyzer_models import AnalysisRequest, AnalysisResponse, InfoResponse
 
 # Type hints for the user's custom logic
-AnalyzeLogicFunction = Callable[[AnalysisRequest], Union[Analysis, Awaitable[Analysis]]]
+AnalyzeLogicFunction = Callable[[AnalysisRequest], Union[AnalysisResponse, Awaitable[AnalysisResponse]]]
 
 class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerServiceServicer):
     """
@@ -73,7 +72,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             if isinstance(python_response, Awaitable):
                 python_response = python_response.__await__()
 
-            if not isinstance(python_response, Analysis):
+            if not isinstance(python_response, AnalysisResponse):
                 print("Analysis response was an invalid type, ")
                 proto_analysis.analysis_outcome = ares_outcome_enum_pb2.FAILURE
                 proto_analysis.error_string = "The user's custom analysis logic returned an invalid type, analysis cannot be processed"
@@ -200,7 +199,15 @@ class AresAnalyzerService:
         else:
             self._server.add_insecure_port(f'[::]:{self._port}')
 
-    def add_setting(self, setting_name: str, setting_type: ares_data_models.AresDataType, optional: bool = True, constraints: Union[list[int], list[str], list[float]] = [], struct_schema: Optional[Dict[str, AresSchemaEntry]] = None):
+    def add_setting(self, 
+                    setting_name: str, 
+                    setting_type: ares_data_models.AresDataType,
+                    default_value: Any = None, 
+                    optional: bool = True, 
+                    constraints: Union[list[int], list[str], list[float]] = [], 
+                    struct_schema: Optional[Dict[str, AresSchemaEntry]] = None, 
+                    limits: Optional[Limits] = None,
+                    description: Optional[str] = None):
         """
         Adds an analyzer setting to be reported to ARES when capabilities are requested.
         While most `PyAres.Models.AresDataType` options are supported, bool arrays and byte arrays
@@ -212,8 +219,30 @@ class AresAnalyzerService:
             optional (bool): Whether the setting is optional.
             constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
             struct_schema: An optional dictionary defining the fields of a STRUCT type setting, using AresSchemaEntry objects.
+            limits: An optional limits object used to specify minimum and maximum values for a setting
+            description: An optional string to describe your setting in more detail. Appears in ARES as a tooltip in the settings menu.
         """
-        self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type, optional, constraints, struct_schema)
+        try:
+            if default_value is not None:
+                default_ares_value = ares_value_utils.create_ares_value(default_value)
+                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type=setting_type, 
+                                                                                                                    optional=optional, 
+                                                                                                                    choices=constraints, 
+                                                                                                                    struct_schema=struct_schema, 
+                                                                                                                    limits=limits, 
+                                                                                                                    default_value=default_ares_value,
+                                                                                                                    description=description)
+        
+            else:
+                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type=setting_type, 
+                                                                                                                    optional=optional, 
+                                                                                                                    choices=constraints, 
+                                                                                                                    struct_schema=struct_schema, 
+                                                                                                                    limits=limits,
+                                                                                                                    description=description)
+        
+        except Exception as e:
+            print(f"Encountered an exception while adding setting {setting_name}: {e}")
 
     def add_analysis_parameter(self, parameter_name: str, parameter_type: ares_data_models.AresDataType, optional: bool = False, struct_schema: Optional[Dict[str, AresSchemaEntry]] = None):
         """
@@ -247,7 +276,7 @@ class AresAnalyzerService:
             Setting this value to false will allow you to continue execution after starting your service, however this should ONLY be done if you have
             another mechanism for keeping your process alive (such as a GUI, or a loop). Defaults to true.
         """
-        print(f"Starting Ares Device Service on port {self._port}...")
+        print(f"Starting Ares Analysis Service on port {self._port}...")
         self._server.start()
 
         if wait_for_termination:
