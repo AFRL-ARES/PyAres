@@ -1,4 +1,4 @@
-from .ares_data_models import AresDataType, Outcome, RequestMetadata, AresSchemaEntry, Quantity, QuantitySchema, Limits
+from .ares_data_models import AresDataType, Outcome, RequestMetadata, AresSchemaEntry, Quantity, QuantitySchema, Limits, PlanStatusCode
 
 __all__ = [
     "AresDataType",
@@ -7,5 +7,6 @@ __all__ = [
     "AresSchemaEntry",
     "Quantity",
     "QuantitySchema",
-    "Limits"
+    "Limits",
+    "PlanStatusCode"
 ]

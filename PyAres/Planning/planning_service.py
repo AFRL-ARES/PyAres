@@ -21,6 +21,7 @@ from ..Utils import ares_data_schema_utils
 from ..Utils import ares_data_type_utils
 from ..Utils import ares_struct_utils
 from ..Utils import ares_outcome_utils
+from ..Utils import ares_plan_status_code_utils
 
 # Import python models
 from ..Models import ares_data_models, Limits
@@ -122,7 +123,8 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         python_request = PlanRequest(parameters=parameters, 
                                      settings=ares_struct_utils.ares_struct_to_dict(request.adapter_settings), 
                                      analysis_results=list(request.analysis_results),
-                                     metadata=RequestMetadata(request.metadata))
+                                     metadata=RequestMetadata(request.metadata),
+                                     previous_plan_status_code=ares_plan_status_code_utils.proto_plan_status_to_python_plan_status(request.previous_plan_status_code))
         
         #Handle call using the user's custom planning logic 
         response_proto = plan_pb2.PlanningResponse()

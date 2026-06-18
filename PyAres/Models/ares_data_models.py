@@ -30,6 +30,12 @@ class Outcome(Enum):
     WARNING = 3
     CANCELED = 4
 
+class PlanStatusCode(Enum):
+    PLAN_STATUS_UNSPECIFIED = 0
+    PLAN_ACCEPTED = 1
+    PLAN_UNACHIEVABLE = 2
+    PLAN_FAILED = 3
+
 class RequestMetadata():
     def __init__(self, proto_metadata: request_metadata_pb2.RequestMetadata):
         self.system_name = proto_metadata.system_name

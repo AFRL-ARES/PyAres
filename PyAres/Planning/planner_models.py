@@ -1,5 +1,6 @@
 from typing import Dict, Any, List, Sequence, Optional
-from ..Models import Outcome, AresDataType, RequestMetadata
+from ..Models import Outcome, AresDataType, RequestMetadata, PlanStatusCode
+from enum import Enum
 
 class ParameterHistoryItem:
     """ Represents a single historical parameter item """
@@ -107,7 +108,12 @@ class PlanRequest:
     
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
-    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: Sequence[float], metadata: RequestMetadata = RequestMetadata.from_default_values()):
+    def __init__(self, 
+                 parameters: list[PlanningParameter], 
+                 settings: Dict[str, Any], 
+                 analysis_results: Sequence[float], 
+                 metadata: RequestMetadata = RequestMetadata.from_default_values(),
+                 previous_plan_status_code: PlanStatusCode = PlanStatusCode.PLAN_STATUS_UNSPECIFIED):
         """
         Initializes a PlanRequest.
 
@@ -118,6 +124,7 @@ class PlanRequest:
         self.settings = settings
         self.analysis_results = analysis_results
         self.request_metadata = metadata
+        self.previous_plan_status_code = previous_plan_status_code
 
     def __str__(self) -> str:
         param_str = "\n ".join(self.parameter_names)
@@ -175,6 +182,8 @@ class PlanResponse:
             parameter_names: A list of names associated with planned parameters.
             parameter_values: A list of values associated with planned parameters. 
             parameter_data: A python dictionary of key:value pairs of planned parameters and planned values
+            outcome: An enum of type Outcome that determines whether the planning process succeeded or not, defaults to SUCCESS
+            error_string: An optional string for specifying planning failure reasons to be relayed to ARES
         """
         if parameter_data is not None:
             self.parameter_names = list(parameter_data.keys())
