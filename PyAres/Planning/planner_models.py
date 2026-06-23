@@ -109,11 +109,12 @@ class PlanRequest:
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
     def __init__(self, 
-                 parameters: list[PlanningParameter], 
-                 settings: Dict[str, Any], 
-                 analysis_results: Sequence[float], 
-                 metadata: RequestMetadata = RequestMetadata.from_default_values(),
-                 previous_plan_status_code: PlanStatusCode = PlanStatusCode.PLAN_STATUS_UNSPECIFIED):
+                parameters: list[PlanningParameter], 
+                settings: Dict[str, Any], 
+                analysis_results: Sequence[float], 
+                batch_size: int = 1,
+                metadata: RequestMetadata = RequestMetadata.from_default_values(),
+                previous_plan_status_codes: List[PlanStatusCode] = []):
         """
         Initializes a PlanRequest.
 
@@ -123,8 +124,9 @@ class PlanRequest:
         self.parameters = parameters
         self.settings = settings
         self.analysis_results = analysis_results
+        self.batch_size = batch_size
         self.request_metadata = metadata
-        self.previous_plan_status_code = previous_plan_status_code
+        self.previous_plan_status_codes = previous_plan_status_codes
 
     def __str__(self) -> str:
         param_str = "\n ".join(self.parameter_names)
@@ -134,13 +136,15 @@ class PlanRequest:
         metadata_str = str(self.request_metadata).replace('\n', '\n ')
         return (f"PlanRequest object with:\n"
                 f"parameters:\n"
-                f" {param_str}\n"
+                f"{param_str}\n"
                 f"settings:\n"
-                f" {settings_str}\n"
+                f"{settings_str}\n"
                 f"analysis_results:\n"
-                f" {analysis_str}\n"
+                f"{analysis_str}\n"
                 f"request_metadata:\n"
-                f"{metadata_str}")
+                f"{metadata_str}"
+                f"batch_size:\n"
+                f"{self.batch_size}")
     
     def __repr__(self) -> str:
         return self.__str__()
@@ -210,3 +214,38 @@ class PlanResponse:
     
     def __repr__(self) -> str:
         return self.__str__()
+
+class PlannedParameter:
+    def __init__(self, parameter_name: str, parameter_value: Any):
+        self.parameter_name = parameter_name
+        self.parameter_value = parameter_value
+
+    def __str__(self):
+        # A clean, readable key-value output
+        return f"{self.parameter_name}: {self.parameter_value}"
+
+    def __repr__(self):
+        # The !r formatting flag automatically wraps strings in quotes and calls __repr__ on the values
+        return f"PlannedParameters(parameter_name={self.parameter_name!r}, parameter_value={self.parameter_value!r})"
+
+class Plan:
+    def __init__(self, planned_parameters: List[PlannedParameter], outcome: Outcome, error_string: str = ""):
+        self.planned_parameters = planned_parameters
+        self.outcome = outcome
+        self.error_string = error_string
+
+    def __str__(self):
+        base_str = f"Plan (Outcome: {self.outcome})"
+        
+        # Format the list of parameters into a readable string
+        if self.planned_parameters:
+            params_str = ", ".join(str(p) for p in self.planned_parameters)
+            base_str += f" | Parameters: [{params_str}]"
+            
+        if self.error_string:
+            base_str += f" - Error: '{self.error_string}'"
+            
+        return base_str
+
+    def __repr__(self):
+        return f"Plan(planned_parameters={self.planned_parameters!r}, outcome={self.outcome!r}, error_string={self.error_string!r})"

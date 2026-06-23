@@ -22,13 +22,14 @@ from ..Utils import ares_data_type_utils
 from ..Utils import ares_struct_utils
 from ..Utils import ares_outcome_utils
 from ..Utils import ares_plan_status_code_utils
+from ..Utils import plan_response_utils
 
 # Import python models
 from ..Models import ares_data_models, Limits
 from .planner_models import *
 
 # Type hint for the user's custom planning logic
-PlanLogicFunction = Callable[[PlanRequest], Union[PlanResponse, Awaitable[PlanResponse]]]
+PlanLogicFunction = Callable[[PlanRequest], Union[PlanResponse, Awaitable[PlanResponse], List[Plan], Awaitable[List[Plan]]]]
 
 class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceServicer):
     """
@@ -124,7 +125,8 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
                                      settings=ares_struct_utils.ares_struct_to_dict(request.adapter_settings), 
                                      analysis_results=list(request.analysis_results),
                                      metadata=RequestMetadata(request.metadata),
-                                     previous_plan_status_code=ares_plan_status_code_utils.proto_plan_status_to_python_plan_status(request.previous_plan_status_code))
+                                     batch_size=request.batch_size,
+                                     previous_plan_status_codes=[ares_plan_status_code_utils.proto_plan_status_to_python_plan_status(c) for c in request.previous_plan_status_codes])
         
         #Handle call using the user's custom planning logic 
         response_proto = plan_pb2.PlanningResponse()
@@ -141,20 +143,23 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
             response_proto.planning_outcome = ares_outcome_enum_pb2.FAILURE
             return response_proto
         
-        if not isinstance(python_response, PlanResponse):
-            response_proto.error_string = "The returned response from the user planning method was not a plan response, and thus was invalid."
+        if isinstance(python_response, PlanResponse):
+            response_proto.planning_outcome = ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome)
+            response_proto.error_string = python_response.error_string
+
+            for i in range(len(python_response.parameter_names)):
+                planned_parameter = plan_pb2.PlannedParameter(parameter_value=ares_value_utils.create_ares_value(python_response.parameter_values[i]))
+                planned_parameter.parameter_name = python_response.parameter_names[i]
+                new_planned_parameter = response_proto.planned_parameters.add()
+                new_planned_parameter.CopyFrom(planned_parameter)
+
+        elif isinstance(python_response, List) and all(isinstance(item, Plan) for item in python_response):
+            response_proto.plans.extend(plan_response_utils.python_plan_to_proto_plan(p) for p in python_response)
+
+        else:
+            response_proto.error_string = "The returned response from the user planning method was not valid, users must return either a list of plans or a plan response."
             response_proto.planning_outcome = ares_outcome_enum_pb2.FAILURE
-            return response_proto
         
-        response_proto.planning_outcome = ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome)
-        response_proto.error_string = python_response.error_string
-
-        for i in range(len(python_response.parameter_names)):
-            planned_parameter = plan_pb2.PlannedParameter(parameter_value=ares_value_utils.create_ares_value(python_response.parameter_values[i]))
-            planned_parameter.parameter_name = python_response.parameter_names[i]
-            new_planned_parameter = response_proto.planned_parameters.add()
-            new_planned_parameter.CopyFrom(planned_parameter)
-
         print("Sending Plan Response.....")
         return response_proto
     
