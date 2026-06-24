@@ -36,8 +36,10 @@ class RequestMetadata():
         self.campaign_name = proto_metadata.campaign_name
         self.campaign_id = proto_metadata.campaign_id
         self.experiment_id = proto_metadata.experiment_id
-        dt = proto_metadata.experiment_start_time.ToDatetime()
-        self.experiment_start_time = dt.strftime("%Y-%m-%d %H:%M:%S")
+        edt = proto_metadata.experiment_start_time.ToDatetime()
+        cdt = proto_metadata.campaign_start_time.ToDatetime()
+        self.experiment_start_time = edt.strftime("%Y-%m-%d %H:%M:%S")
+        self.campaign_start_time = cdt.strftime("%Y-%m-%d %H:%M:%S")
 
     def __str__(self) ->str:
         return (f"RequestMetadata object with fields:\n"
@@ -45,7 +47,8 @@ class RequestMetadata():
                 f"Campaign Name: {self.campaign_name}\n"
                 f"Campaign ID: {self.campaign_id}\n"
                 f"Experiment ID: {self.experiment_id}\n"
-                f"Experiment Start Time: {self.experiment_start_time}\n")
+                f"Experiment Start Time: {self.experiment_start_time}\n"
+                f"Campaign Start Time: {self.campaign_start_time}\n")
     
     def __repr__(self) -> str:
         return self.__str__()
