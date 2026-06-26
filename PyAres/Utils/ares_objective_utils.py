@@ -1,10 +1,10 @@
-from ..Analyzing import Objective
+from ..Models import Objective
 from ares_datamodel.analyzing import analysis_pb2
-import ares_value_utils, ares_struct_utils
+from . import ares_value_utils, ares_struct_utils
 
 def python_objective_to_proto(py_objective: Objective) -> analysis_pb2.Objective:
   proto_objective = analysis_pb2.Objective()
-  proto_objective.objective_value = ares_value_utils.create_ares_value(py_objective.objective_value)
+  proto_objective.objective_value.CopyFrom(ares_value_utils.create_ares_value(py_objective.objective_value))
   proto_objective.objective_name = py_objective.objective_name
   
   if py_objective.metadata:

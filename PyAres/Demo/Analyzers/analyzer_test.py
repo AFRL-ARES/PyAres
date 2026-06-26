@@ -2,7 +2,7 @@ from PyAres import AresAnalyzerService, AnalysisRequest, AnalysisResponse, AresD
 
 def analyze(request: AnalysisRequest) -> AnalysisResponse:
     #Custom Analysis Logic
-    temp_one = request.inputs.get("Temperature One")
+    temp_one = request.inputs.get("Temperature")
     print("Processing Analysis Request")
 
     if not isinstance(temp_one, float):

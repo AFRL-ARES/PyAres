@@ -1,22 +1,5 @@
 from typing import Dict, Any, List, overload
-from ..Models import Outcome, RequestMetadata
-
-class Objective:
-    """ A class that represents an objective during analysis. """
-
-    def __init__(self, objective_name: str, objective_value: Any, metadata: Dict = {}):
-        """
-        Initializes a new objective object
-
-        Args:
-            objective_name: The name your analyzer is associating with your objective
-            objective_value: The value your analyzer calculated for this objective
-            description: An optional dictionary for storing various pieces of metadata
-        """
-
-        self.objective_name = objective_name
-        self.objective_value = objective_value
-        self.metadata = metadata
+from ..Models import Outcome, RequestMetadata, Objective
 
 class AnalysisRequest:
     """ Represents an analysis request received from ARES. """

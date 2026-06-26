@@ -1,7 +1,7 @@
 from ares_datamodel import request_metadata_pb2
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Union, List, Optional, Dict
+from typing import Union, List, Optional, Dict, Any
 import pint
 
 class AresDataType(Enum):
@@ -88,3 +88,21 @@ class AresSchemaEntry:
     list_element_schema: Optional['AresSchemaEntry'] = None
     min_number_value: Optional[float] = None
     max_number_value: Optional[float] = None
+
+
+class Objective:
+    """ A class that represents an objective during analysis. """
+
+    def __init__(self, objective_name: str, objective_value: Any, metadata: Dict = {}):
+        """
+        Initializes a new objective object
+
+        Args:
+            objective_name: The name your analyzer is associating with your objective
+            objective_value: The value your analyzer calculated for this objective
+            description: An optional dictionary for storing various pieces of metadata
+        """
+
+        self.objective_name = objective_name
+        self.objective_value = objective_value
+        self.metadata = metadata

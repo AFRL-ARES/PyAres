@@ -22,8 +22,8 @@ from ..Utils import ares_value_utils
 from ..Utils import ares_objective_utils
 
 # Import python models
-from ..Models import ares_data_models, RequestMetadata, Limits, AresSchemaEntry
-from .analyzer_models import AnalysisRequest, AnalysisResponse, InfoResponse, Objective
+from ..Models import ares_data_models, RequestMetadata, Limits, AresSchemaEntry, Objective
+from .analyzer_models import AnalysisRequest, AnalysisResponse, InfoResponse
 
 # Type hints for the user's custom logic
 AnalyzeLogicFunction = Callable[[AnalysisRequest], Union[AnalysisResponse, Awaitable[AnalysisResponse]]]
@@ -82,10 +82,11 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             print("Sending Analysis Response.....")
             
             if python_response.result:
-                return analysis_pb2.AnalysisResponse(
-                    objectives=ares_objective_utils.python_objective_to_proto(Objective("Result", python_response.result)),
-                    analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
+                proto_analysis = analysis_pb2.AnalysisResponse(analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
                     error_string=python_response.error_string)
+                
+                proto_analysis.objectives.append(ares_objective_utils.python_objective_to_proto(Objective("Result", python_response.result)))
+                return proto_analysis
             
             else:
                 return analysis_pb2.AnalysisResponse(
