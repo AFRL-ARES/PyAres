@@ -19,10 +19,11 @@ from ..Utils import ares_struct_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_outcome_utils
 from ..Utils import ares_value_utils
+from ..Utils import ares_objective_utils
 
 # Import python models
 from ..Models import ares_data_models, RequestMetadata, Limits, AresSchemaEntry
-from .analyzer_models import AnalysisRequest, AnalysisResponse, InfoResponse
+from .analyzer_models import AnalysisRequest, AnalysisResponse, InfoResponse, Objective
 
 # Type hints for the user's custom logic
 AnalyzeLogicFunction = Callable[[AnalysisRequest], Union[AnalysisResponse, Awaitable[AnalysisResponse]]]
@@ -79,11 +80,18 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
                 return proto_analysis
             
             print("Sending Analysis Response.....")
-            return analysis_pb2.Analysis(
-                result=python_response.result,
-                analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
-                error_string=python_response.error_string
-            )
+            
+            if python_response.result:
+                return analysis_pb2.AnalysisResponse(
+                    objectives=ares_objective_utils.python_objective_to_proto(Objective("Result", python_response.result)),
+                    analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
+                    error_string=python_response.error_string)
+            
+            else:
+                return analysis_pb2.AnalysisResponse(
+                    objectives=(ares_objective_utils.python_objective_to_proto(obj) for obj in python_response.objectives),
+                    analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
+                    error_string=python_response.error_string)
         
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)

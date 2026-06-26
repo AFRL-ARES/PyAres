@@ -1,5 +1,22 @@
-from typing import Dict, Any
+from typing import Dict, Any, List, overload
 from ..Models import Outcome, RequestMetadata
+
+class Objective:
+    """ A class that represents an objective during analysis. """
+
+    def __init__(self, objective_name: str, objective_value: Any, metadata: Dict = {}):
+        """
+        Initializes a new objective object
+
+        Args:
+            objective_name: The name your analyzer is associating with your objective
+            objective_value: The value your analyzer calculated for this objective
+            description: An optional dictionary for storing various pieces of metadata
+        """
+
+        self.objective_name = objective_name
+        self.objective_value = objective_value
+        self.metadata = metadata
 
 class AnalysisRequest:
     """ Represents an analysis request received from ARES. """
@@ -21,24 +38,52 @@ class AnalysisRequest:
         return self.__str__()
 
 class AnalysisResponse:
-    """ Represents the result of an analysis process. """
-
+    @overload
     def __init__(self, result: float, outcome: Outcome = Outcome.SUCCESS, error_string: str = ""):
         """
-        Initializes an Analysis message
-
-        Args:
-            result: The value your analyzer returns as the result of the experiment being analyzed. Represented as a float.
-            success: A boolean value that represents whether analysis was done successfully.
-            error_string: An optional string argument for passing why analysis failed to ARES. Will default to an empty string if no value is provided.
+        Initializes an Analysis Result message using the deprecated format.
+        ...
         """
-        self.result = result
-        self.outcome = outcome
-        self.error_string = error_string
+        ... 
+
+    @overload
+    def __init__(self, objectives: List[Objective], outcome: Outcome = Outcome.SUCCESS, error_string: str = ""):
+        """
+        Initializes an Analysis Result message using the new standard format.
+        ...
+        """
+        ... 
+    
+    def __init__(self, *args, **kwargs):
+        self.outcome = args[1] if len(args) > 1 else kwargs.get("outcome", Outcome.SUCCESS)
+        self.error_string = args[2] if len(args) > 2 else kwargs.get("error_string", "")
+        self.result = 0.0
+        self.objectives = []
+
+        if len(args) > 0:
+            primary_arg = args[0]
+            
+            if isinstance(primary_arg, (float, int)):
+                self.result = float(primary_arg)
+            
+            elif isinstance(primary_arg, list):
+                self.objectives = primary_arg
+                
+            else:
+                raise TypeError(f"First argument must be a float or a list of Objectives, got {type(primary_arg)}")
+
+        else:
+            if "result" in kwargs:
+                self.result = float(kwargs["result"])
+            elif "objectives" in kwargs:
+                self.objectives = kwargs["objectives"]
+            else:
+                raise TypeError("You must provide either 'result' or 'objectives'.")
 
     def __str__(self) -> str:
         return (f"Analysis object with:\n"
                 f"  result: {self.result}\n"
+                f"  objectives: {self.objectives}\n"
                 f"  outcome: {self.outcome}\n"
                 f"  error_string: {self.error_string}")
     
@@ -62,5 +107,3 @@ class InfoResponse:
         self.version = version
         self.description = description
 
-
-        
