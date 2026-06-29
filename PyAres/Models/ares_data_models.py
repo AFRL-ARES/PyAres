@@ -89,7 +89,6 @@ class AresSchemaEntry:
     min_number_value: Optional[float] = None
     max_number_value: Optional[float] = None
 
-
 class Objective:
     """ A class that represents an objective during analysis. """
 
@@ -106,3 +105,20 @@ class Objective:
         self.objective_name = objective_name
         self.objective_value = objective_value
         self.metadata = metadata
+
+class AnalysisResult:
+    """ A class that represents a round of analysis results """
+    
+    def __init__(self, objectives: List[Objective], analysis_outcome: Outcome, error_string: str = ""):
+        """
+        Initializes a new Analysis Result object
+
+        Args:
+            objectives: A list of objective objects representing the values produced by the analyzer for this round of analysis
+            analysis_outcome: An outcome field that says whether the analysis failed, succeeded or otherwise
+            error_string: An optional string value for specifying why analysis failed
+        """
+
+        self.objectives = objectives
+        self.analysis_outcome = analysis_outcome
+        self.error_string = error_string

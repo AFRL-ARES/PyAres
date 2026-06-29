@@ -1,5 +1,5 @@
 from typing import Dict, Any, List, Sequence, Optional
-from ..Models import Outcome, AresDataType, RequestMetadata
+from ..Models import Outcome, AresDataType, RequestMetadata, AnalysisResult
 
 class ParameterHistoryItem:
     """ Represents a single historical parameter item """
@@ -107,7 +107,7 @@ class PlanRequest:
     
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
-    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: Sequence[float], metadata: RequestMetadata = RequestMetadata.from_default_values()):
+    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: Sequence[AnalysisResult], metadata: RequestMetadata = RequestMetadata.from_default_values()):
         """
         Initializes a PlanRequest.
 

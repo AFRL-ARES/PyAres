@@ -21,6 +21,7 @@ from ..Utils import ares_data_schema_utils
 from ..Utils import ares_data_type_utils
 from ..Utils import ares_struct_utils
 from ..Utils import ares_outcome_utils
+from ..Utils import analysis_result_utils
 
 # Import python models
 from ..Models import ares_data_models, Limits
@@ -121,7 +122,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         
         python_request = PlanRequest(parameters=parameters, 
                                      settings=ares_struct_utils.ares_struct_to_dict(request.adapter_settings), 
-                                     analysis_results=list(request.analysis_results),
+                                     analysis_results=[analysis_result_utils.proto_analysis_result_to_python(proto) for proto in request.analysis_results],
                                      metadata=RequestMetadata(request.metadata))
         
         #Handle call using the user's custom planning logic 

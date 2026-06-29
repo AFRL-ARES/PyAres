@@ -52,6 +52,9 @@ class AnalysisResponse:
             elif isinstance(primary_arg, list):
                 self.objectives = primary_arg
                 
+            elif primary_arg is None:
+                self.result = None
+                   
             else:
                 raise TypeError(f"First argument must be a float or a list of Objectives, got {type(primary_arg)}")
 

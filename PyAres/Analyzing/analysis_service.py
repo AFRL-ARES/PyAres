@@ -78,24 +78,35 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
                 proto_analysis.analysis_outcome = ares_outcome_enum_pb2.FAILURE
                 proto_analysis.error_string = "The user's custom analysis logic returned an invalid type, analysis cannot be processed"
                 return proto_analysis
-            
-            print("Sending Analysis Response.....")
-            
-            if python_response.result:
-                proto_analysis = analysis_pb2.AnalysisResponse(analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
-                    error_string=python_response.error_string)
-                
-                proto_analysis.objectives.append(ares_objective_utils.python_objective_to_proto(Objective("Result", python_response.result)))
-                return proto_analysis
-            
-            else:
+
+            if python_response.result is None and len(python_response.objectives) == 0:
+                print("Analysis Error Detected! No objective scores were provided.")
+                proto_analysis = analysis_pb2.AnalysisResponse(analysis_outcome=ares_outcome_enum_pb2.FAILURE)
+
+                if python_response.error_string != "":
+                    proto_analysis.error_string = python_response.error_string
+
+                else:
+                    proto_analysis.error_string = "Analyzer returned no objective scores, but did not provide an error string."
+
+            elif len(python_response.objectives) > 0:
                 proto_analysis = analysis_pb2.AnalysisResponse(
                     analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
                     error_string=python_response.error_string)
                 
                 proto_analysis.objectives.extend([ares_objective_utils.python_objective_to_proto(obj) for obj in python_response.objectives])
 
-                return proto_analysis
+            else:
+                proto_analysis = analysis_pb2.AnalysisResponse(analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome), 
+                                                               error_string=python_response.error_string)
+                
+                proto_analysis.objectives.append(ares_objective_utils.python_objective_to_proto(Objective("Result", python_response.result)))
+
+            if len(proto_analysis.objectives) == 0:
+                print("THERE WASN'T ANYTHING IN THE OBJECTIVES.....")
+            
+            print("Sending Analysis Response.....")
+            return proto_analysis
         
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)
