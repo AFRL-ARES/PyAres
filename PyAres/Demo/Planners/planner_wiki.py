@@ -1,23 +1,27 @@
-from PyAres import AresPlannerService, PlanRequest, PlanResponse, AresDataType
+from PyAres import *
+from typing import List
 import random
 
-def generate_plan(request: PlanRequest) -> PlanResponse:
-    planned_values = []
-    names = []
+def generate_plans(request: PlanRequest) -> List[Plan]:    
+    plans = []
+    for i in request.previous_plan_status_codes:
+        print(f"Status Code: {i}")
 
-    # Iterate through every parameter configured in the ARES Experiment
-    for param in request.parameters:
-        # Simple Logic: Pick a random value within the allowed range
-        val = random.uniform(param.minimum_value, param.maximum_value)
+    # Make as many plans as was requested
+    for i in range(request.batch_size):
+        current_params = []
+        for param in request.parameters:
+            # Simple Logic: Pick a random value within the allowed range
+            val = random.uniform(param.minimum_value, param.maximum_value)
+            current_params.append(PlannedParameter(param.name, val))
         
-        names.append(param.name)
-        planned_values.append(val)
+        plans.append(Plan(current_params, Outcome.SUCCESS))
 
-    return PlanResponse(parameter_names=names, parameter_values=planned_values)
+    return plans
 
 if __name__ == "__main__":
     service = AresPlannerService(
-        generate_plan, 
+        generate_plans, 
         "Random Search Planner", 
         "This planner picks random values within bounds.", 
         "1.0.0"

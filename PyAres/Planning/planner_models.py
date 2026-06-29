@@ -1,5 +1,6 @@
 from typing import Dict, Any, List, Sequence, Optional
-from ..Models import Outcome, AresDataType, RequestMetadata
+from ..Models import Outcome, AresDataType, RequestMetadata, PlanStatusCode
+from enum import Enum
 
 class ParameterHistoryItem:
     """ Represents a single historical parameter item """
@@ -28,9 +29,15 @@ class PlanningParameter:
     Designed to provide a more user-friendly abstraction for the user to interact
     with planning parameters through.
     """
-    def __init__(self, name: str, minimum_value: float, 
-                 maximum_value: float, param_history: list[ParameterHistoryItem], data_type: AresDataType, 
-                 is_planned: bool, is_result: bool, planner_name: str, initial_value = None):
+    def __init__(self, name: str, 
+                 data_type: AresDataType,
+                 minimum_value: float = None, 
+                 maximum_value: float = None, 
+                 param_history: list[ParameterHistoryItem] = [],
+                 is_planned: bool = False, 
+                 is_result: bool = False, 
+                 planner_name: str = "", 
+                 initial_value = None):
         """
         Initializes a PlanningParameter.
 
@@ -107,7 +114,13 @@ class PlanRequest:
     
     Designed to provide a more user-friendly abstraction for interacting with a plan request message.
     """
-    def __init__(self, parameters: list[PlanningParameter], settings: Dict[str, Any], analysis_results: Sequence[float], metadata: RequestMetadata = RequestMetadata.from_default_values()):
+    def __init__(self, 
+                parameters: list[PlanningParameter], 
+                settings: Dict[str, Any], 
+                analysis_results: Sequence[float],
+                metadata: RequestMetadata = RequestMetadata.from_default_values(),
+                batch_size: int = 1,
+                previous_plan_status_codes: List[PlanStatusCode] = None):
         """
         Initializes a PlanRequest.
 
@@ -117,7 +130,13 @@ class PlanRequest:
         self.parameters = parameters
         self.settings = settings
         self.analysis_results = analysis_results
+        self.batch_size = batch_size
         self.request_metadata = metadata
+
+        if previous_plan_status_codes is None:
+            self.previous_plan_status_codes = []
+        else:    
+            self.previous_plan_status_codes = previous_plan_status_codes
 
     def __str__(self) -> str:
         param_str = "\n ".join(self.parameter_names)
@@ -127,13 +146,15 @@ class PlanRequest:
         metadata_str = str(self.request_metadata).replace('\n', '\n ')
         return (f"PlanRequest object with:\n"
                 f"parameters:\n"
-                f" {param_str}\n"
+                f"{param_str}\n"
                 f"settings:\n"
-                f" {settings_str}\n"
+                f"{settings_str}\n"
                 f"analysis_results:\n"
-                f" {analysis_str}\n"
+                f"{analysis_str}\n"
                 f"request_metadata:\n"
-                f"{metadata_str}")
+                f"{metadata_str}"
+                f"batch_size:\n"
+                f"{self.batch_size}")
     
     def __repr__(self) -> str:
         return self.__str__()
@@ -175,6 +196,8 @@ class PlanResponse:
             parameter_names: A list of names associated with planned parameters.
             parameter_values: A list of values associated with planned parameters. 
             parameter_data: A python dictionary of key:value pairs of planned parameters and planned values
+            outcome: An enum of type Outcome that determines whether the planning process succeeded or not, defaults to SUCCESS
+            error_string: An optional string for specifying planning failure reasons to be relayed to ARES
         """
         if parameter_data is not None:
             self.parameter_names = list(parameter_data.keys())
@@ -201,3 +224,38 @@ class PlanResponse:
     
     def __repr__(self) -> str:
         return self.__str__()
+
+class PlannedParameter:
+    def __init__(self, parameter_name: str, parameter_value: Any):
+        self.parameter_name = parameter_name
+        self.parameter_value = parameter_value
+
+    def __str__(self):
+        # A clean, readable key-value output
+        return f"{self.parameter_name}: {self.parameter_value}"
+
+    def __repr__(self):
+        # The !r formatting flag automatically wraps strings in quotes and calls __repr__ on the values
+        return f"PlannedParameters(parameter_name={self.parameter_name!r}, parameter_value={self.parameter_value!r})"
+
+class Plan:
+    def __init__(self, planned_parameters: List[PlannedParameter], outcome: Outcome, error_string: str = ""):
+        self.planned_parameters = planned_parameters
+        self.outcome = outcome
+        self.error_string = error_string
+
+    def __str__(self):
+        base_str = f"Plan (Outcome: {self.outcome})"
+        
+        # Format the list of parameters into a readable string
+        if self.planned_parameters:
+            params_str = ", ".join(str(p) for p in self.planned_parameters)
+            base_str += f" | Parameters: [{params_str}]"
+            
+        if self.error_string:
+            base_str += f" - Error: '{self.error_string}'"
+            
+        return base_str
+
+    def __repr__(self):
+        return f"Plan(planned_parameters={self.planned_parameters!r}, outcome={self.outcome!r}, error_string={self.error_string!r})"
