@@ -7,7 +7,7 @@ from typing import Union, Any, Dict
 from . import ares_data_type_utils
 from ..Models import AresDataType, Quantity
 
-def ares_value_to_py(ares_value: ares_struct_pb2.AresValue):
+def ares_value_to_py(ares_value: ares_struct_pb2.AresValue) -> Any:
     """Converts an AresValue protobuf message to a Python native type."""
     field = ares_value.WhichOneof("kind")
     if field == "null_value":

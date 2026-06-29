@@ -29,9 +29,15 @@ class PlanningParameter:
     Designed to provide a more user-friendly abstraction for the user to interact
     with planning parameters through.
     """
-    def __init__(self, name: str, minimum_value: float, 
-                 maximum_value: float, param_history: list[ParameterHistoryItem], data_type: AresDataType, 
-                 is_planned: bool, is_result: bool, planner_name: str, initial_value = None):
+    def __init__(self, name: str, 
+                 data_type: AresDataType,
+                 minimum_value: float = None, 
+                 maximum_value: float = None, 
+                 param_history: list[ParameterHistoryItem] = [],
+                 is_planned: bool = False, 
+                 is_result: bool = False, 
+                 planner_name: str = "", 
+                 initial_value = None):
         """
         Initializes a PlanningParameter.
 
@@ -111,10 +117,10 @@ class PlanRequest:
     def __init__(self, 
                 parameters: list[PlanningParameter], 
                 settings: Dict[str, Any], 
-                analysis_results: Sequence[float], 
-                batch_size: int = 1,
+                analysis_results: Sequence[float],
                 metadata: RequestMetadata = RequestMetadata.from_default_values(),
-                previous_plan_status_codes: List[PlanStatusCode] = []):
+                batch_size: int = 1,
+                previous_plan_status_codes: List[PlanStatusCode] = None):
         """
         Initializes a PlanRequest.
 
@@ -126,7 +132,11 @@ class PlanRequest:
         self.analysis_results = analysis_results
         self.batch_size = batch_size
         self.request_metadata = metadata
-        self.previous_plan_status_codes = previous_plan_status_codes
+
+        if previous_plan_status_codes is None:
+            self.previous_plan_status_codes = []
+        else:    
+            self.previous_plan_status_codes = previous_plan_status_codes
 
     def __str__(self) -> str:
         param_str = "\n ".join(self.parameter_names)

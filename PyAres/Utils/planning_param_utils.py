@@ -19,16 +19,16 @@ def convert_python_plan_param_to_proto(param: PlanningParameter) -> plan_pb2.Pla
   return new_proto_param 
 
 def convert_proto_plan_param_to_python(param: plan_pb2.PlanningParameter) -> PlanningParameter:
-  new_python_param = PlanningParameter()
-  new_python_param.name = param.parameter_name
+  new_python_param = PlanningParameter(param.parameter_name, ares_data_type_utils.proto_ares_type_to_python_ares_type(param.data_type))
   new_python_param.minimum_value = param.minimum_value
   new_python_param.maximum_value = param.maximum_value
   new_python_param.param_history.extend([param_history_info_utils.convert_proto_param_history_to_python(p) for p in param.parameter_history])
-  new_python_param.data_type = ares_data_type_utils.proto_ares_type_to_python_ares_type(param.data_type)
   new_python_param.is_planned = param.is_planned
   new_python_param.is_result = param.is_result
   new_python_param.planner_name = param.planner_name
-  ares_value_utils.ares_value_to_py(param.initial_value, new_python_param.initial_value)
+  
+  if(param.initial_value is not None):
+    new_python_param.initial_value = ares_value_utils.ares_value_to_py(param.initial_value)
 
   return new_python_param
 
