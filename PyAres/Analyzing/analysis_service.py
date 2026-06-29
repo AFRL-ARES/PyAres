@@ -89,10 +89,13 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
                 return proto_analysis
             
             else:
-                return analysis_pb2.AnalysisResponse(
-                    objectives=(ares_objective_utils.python_objective_to_proto(obj) for obj in python_response.objectives),
+                proto_analysis = analysis_pb2.AnalysisResponse(
                     analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
                     error_string=python_response.error_string)
+                
+                proto_analysis.objectives.extend([ares_objective_utils.python_objective_to_proto(obj) for obj in python_response.objectives])
+
+                return proto_analysis
         
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)

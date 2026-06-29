@@ -1,4 +1,4 @@
-from PyAres import AresAnalyzerService, AnalysisRequest, AnalysisResponse, AresDataType, Outcome, Limits
+from PyAres import *
 
 def analyze(request: AnalysisRequest) -> AnalysisResponse:
     #Custom Analysis Logic
@@ -13,7 +13,9 @@ def analyze(request: AnalysisRequest) -> AnalysisResponse:
     else:
         print(f"Temperature One: {temp_one}")
     
-    analysis = AnalysisResponse(result=temp_one)
+    temp_objective = Objective("Temperature", temp_one)
+    #objective_list = [temp_objective]
+    analysis = AnalysisResponse([temp_objective])
     return analysis
 
 

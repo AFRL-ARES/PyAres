@@ -18,3 +18,4 @@ from .Models import AresSchemaEntry
 from .Models import Quantity
 from .Models import QuantitySchema
 from .Models import Limits
+from .Models import Objective
