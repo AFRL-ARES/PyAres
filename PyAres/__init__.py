@@ -5,6 +5,7 @@ from .Planning import PlanningParameter
 from .Planning import ParameterHistoryItem
 from .Planning import PlannedParameter
 from .Planning import Plan
+from .Planning import ObjectiveStatus
 from .Analyzing import AresAnalyzerService
 from .Analyzing import AnalysisResponse
 from .Analyzing import AnalysisRequest

@@ -23,6 +23,7 @@ from ..Utils import ares_struct_utils
 from ..Utils import ares_outcome_utils
 from ..Utils import ares_plan_status_code_utils
 from ..Utils import plan_response_utils
+from ..Utils import ares_objective_status_utils
 
 # Import python models
 from ..Models import ares_data_models, Limits
@@ -146,6 +147,7 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         if isinstance(python_response, PlanResponse):
             response_proto.planning_outcome = ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome)
             response_proto.error_string = python_response.error_string
+            response_proto.objective_status = ares_objective_status_utils.python_ares_outcome_to_proto_ares_outcome(python_response.objective_status)
 
             for i in range(len(python_response.parameter_names)):
                 planned_parameter = plan_pb2.PlannedParameter(parameter_value=ares_value_utils.create_ares_value(python_response.parameter_values[i]))
