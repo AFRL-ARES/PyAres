@@ -1,4 +1,4 @@
-from .planner_models import PlanningParameter, PlanRequest, PlanResponse, ParameterHistoryItem, Plan, PlannedParameter
+from .planner_models import PlanningParameter, PlanRequest, PlanResponse, ParameterHistoryItem, Plan, PlannedParameter, ObjectiveStatus
 from .planning_service import AresPlannerService
 
 __all__ = [
@@ -9,4 +9,5 @@ __all__ = [
     "Plan",
     "PlannedParameter",
     "ParameterHistoryItem",
+    "ObjectiveStatus"
 ]

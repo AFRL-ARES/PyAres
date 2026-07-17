@@ -21,6 +21,13 @@ class ParameterHistoryItem:
     
     def __repr__(self) -> str:
         return self.__str__()
+    
+class ObjectiveStatus(Enum):
+    """ An enum representing the current status of the objective the planner is trying to achieve (if any) """
+    OBJECTIVE_STATUS_UNSPECIFIED = 0
+    OBJECTIVE_UNACHIEVED = 1
+    OBJECTIVE_ACHIEVED = 2
+    OBJECTIVE_FAILED = 3
 
 class PlanningParameter:
     """
@@ -188,7 +195,8 @@ class PlanResponse:
                  parameter_values: Optional[list] = None,
                  parameter_data: Optional[dict[str,Any]] = None,
                  outcome: Outcome = Outcome.SUCCESS, 
-                 error_string: str = ""):
+                 error_string: str = "",
+                 objective_status: ObjectiveStatus = ObjectiveStatus.OBJECTIVE_STATUS_UNSPECIFIED):
         """
         Initializes a PlanResponse. Using either lists of names and values or a python dictonary of name:value pairs
 
@@ -198,6 +206,7 @@ class PlanResponse:
             parameter_data: A python dictionary of key:value pairs of planned parameters and planned values
             outcome: An enum of type Outcome that determines whether the planning process succeeded or not, defaults to SUCCESS
             error_string: An optional string for specifying planning failure reasons to be relayed to ARES
+            objective_status: An optional value that specifies the status of the objective your planner is trying to achieve (if any)
         """
         if parameter_data is not None:
             self.parameter_names = list(parameter_data.keys())
@@ -214,13 +223,15 @@ class PlanResponse:
         
         self.outcome = outcome
         self.error_string = error_string
+        self.objective_status = objective_status
     
     def __str__(self):
         return (f"PlanResponse object with:\n"
                 f" outcome: {self.outcome}\n"
                 f" parameter_names: {self.parameter_names}\n"
                 f" parameter_values: {self.parameter_values}\n"
-                f" error_string: {self.error_string}\n")
+                f" error_string: {self.error_string}\n"
+                f" objective_status: {self.objective_status}\n")
     
     def __repr__(self) -> str:
         return self.__str__()
@@ -239,13 +250,18 @@ class PlannedParameter:
         return f"PlannedParameters(parameter_name={self.parameter_name!r}, parameter_value={self.parameter_value!r})"
 
 class Plan:
-    def __init__(self, planned_parameters: List[PlannedParameter], outcome: Outcome, error_string: str = ""):
+    def __init__(self, 
+                 planned_parameters: List[PlannedParameter], 
+                 outcome: Outcome, 
+                 error_string: str = "", 
+                 objective_status: ObjectiveStatus = ObjectiveStatus.OBJECTIVE_STATUS_UNSPECIFIED):
         self.planned_parameters = planned_parameters
         self.outcome = outcome
         self.error_string = error_string
+        self.objective_status = objective_status
 
     def __str__(self):
-        base_str = f"Plan (Outcome: {self.outcome})"
+        base_str = f"Plan (Outcome: {self.outcome}) \n (Objective Status: {self.objective_status})"
         
         # Format the list of parameters into a readable string
         if self.planned_parameters:
