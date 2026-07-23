@@ -144,16 +144,19 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
             response_proto.planning_outcome = ares_outcome_enum_pb2.FAILURE
             return response_proto
         
+        # This is the depricated response, and should be treated as a single plan. Maybe mention this response is depricated?
         if isinstance(python_response, PlanResponse):
-            response_proto.planning_outcome = ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome)
-            response_proto.error_string = python_response.error_string
-            response_proto.objective_status = ares_objective_status_utils.python_ares_outcome_to_proto_ares_outcome(python_response.objective_status)
+            planned_parameters = []
 
             for i in range(len(python_response.parameter_names)):
-                planned_parameter = plan_pb2.PlannedParameter(parameter_value=ares_value_utils.create_ares_value(python_response.parameter_values[i]))
-                planned_parameter.parameter_name = python_response.parameter_names[i]
-                new_planned_parameter = response_proto.planned_parameters.add()
-                new_planned_parameter.CopyFrom(planned_parameter)
+                current_name = python_response.parameter_names[i]
+                current_value = python_response.parameter_values[i]
+
+                new_param = PlannedParameter(current_name, current_value)
+                planned_parameters.append(new_param)
+            
+            python_plan = Plan(planned_parameters, python_response.outcome, python_response.error_string, python_response.objective_status)
+            response_proto.plans.append(plan_response_utils.python_plan_to_proto_plan(python_plan))
 
         elif isinstance(python_response, List) and all(isinstance(item, Plan) for item in python_response):
             response_proto.plans.extend(plan_response_utils.python_plan_to_proto_plan(p) for p in python_response)
