@@ -1,5 +1,7 @@
 # Standard Imports
 import grpc
+import asyncio
+import inspect
 from concurrent import futures
 from typing import Callable, Awaitable, Union, Mapping, Dict, Optional, Any
 
@@ -64,13 +66,16 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             python_request = AnalysisRequest(
                 inputs=ares_struct_utils.ares_struct_to_dict(request.inputs),
                 settings=ares_struct_utils.ares_struct_to_dict(request.settings),
-                metadata=RequestMetadata(request.metadata)
-            )
+                metadata=RequestMetadata(request.metadata))
 
             proto_analysis = analysis_pb2.Analysis()
             python_response = self._custom_analysis_logic(python_request)
-            if isinstance(python_response, Awaitable):
-                python_response = python_response.__await__()
+
+            if inspect.isawaitable(python_response):
+                async def resolve(awaitable):
+                    return await awaitable
+
+                python_response = asyncio.run(resolve(python_response))
 
             if not isinstance(python_response, AnalysisResponse):
                 print("Analysis response was an invalid type, ")

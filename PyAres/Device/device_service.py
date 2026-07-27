@@ -16,7 +16,7 @@ from google.protobuf import empty_pb2
 
 from .device_models import DeviceCommandDescriptor
 from ..Models import Limits
-from .device_models import DeviceCommandDescriptor, DeviceCommandResponse, StatusCode
+from .device_models import DeviceCommandDescriptor, DeviceCommandResponse
 from ..Utils import ares_device_command_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_struct_utils

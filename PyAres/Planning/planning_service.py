@@ -1,11 +1,11 @@
 import grpc
+import inspect
+import asyncio
 from concurrent import futures
 from typing import Callable, Awaitable, Union, Dict
 
-from ares_datamodel.planning.remote import ares_remote_planner_service_pb2 as planner_service
 from ares_datamodel.planning.remote import ares_remote_planner_service_pb2_grpc as planner_service_grpc
 from ares_datamodel.planning import planner_pb2
-from ares_datamodel.planning import planner_settings_pb2
 from ares_datamodel.planning import planner_service_capabilities_pb2
 from ares_datamodel.planning import plan_pb2
 from ares_datamodel import ares_data_schema_pb2
@@ -20,10 +20,8 @@ from ..Utils import ares_value_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_data_type_utils
 from ..Utils import ares_struct_utils
-from ..Utils import ares_outcome_utils
 from ..Utils import ares_plan_status_code_utils
 from ..Utils import plan_response_utils
-from ..Utils import ares_objective_status_utils
 
 # Import python models
 from ..Models import ares_data_models, Limits
@@ -133,8 +131,11 @@ class AresPlannerServiceWrapper(planner_service_grpc.AresRemotePlannerServiceSer
         response_proto = plan_pb2.PlanningResponse()
         try:
             python_response = self._custom_plan_logic(python_request)
-            if isinstance(python_response, Awaitable):
-                python_response = python_response.__await__()
+            if inspect.isawaitable(python_response):
+                async def resolve(awaitable):
+                    return await awaitable
+
+                python_response = asyncio.run(resolve(python_response))
 
         except Exception as e:
             #Handle errors from user's logic

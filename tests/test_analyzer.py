@@ -158,22 +158,68 @@ class TestAresAnalyzerService(unittest.TestCase):
         
         def failing_analyze(request):
             raise ValueError("Calculation failed")
-
+ 
         self.service = AresAnalyzerService(failing_analyze, "FailBot", "1.0", port=0)
         
         mock_context = MockGrpcContext()
         mock_request = analyzer_service.AnalysisRequest()
-
+ 
         # The service implementation catches the exception and sets the context code
         response = self.service._service_wrapper.Analyze(mock_request, mock_context)
-
+ 
         # Verify gRPC Context was updated
         self.assertIsNotNone(mock_context._code, "Context error code was not set")
         self.assertIn("Calculation failed", mock_context._details)
-
+ 
         # Verify the returned object indicates failure
         self.assertEqual(response.analysis_outcome, ares_outcome_enum_pb2.FAILURE)
         self.assertIn("Calculation failed", response.error_string)
 
+    def test_get_info(self):
+        """Test GetInfo returns correct metadata."""
+        self.service = AresAnalyzerService(self.analyze_func, self.analyzer_name, self.analyzer_version, description=self.analyzer_desc, port=0)
+        response = self.service._service_wrapper.GetInfo(None, None)
+        self.assertEqual(response.name, self.analyzer_name)
+        self.assertEqual(response.version, self.analyzer_version)
+        self.assertEqual(response.description, self.analyzer_desc)
+
+    def test_get_state(self):
+        """Test GetState returns ACTIVE."""
+        self.service = AresAnalyzerService(self.analyze_func, self.analyzer_name, self.analyzer_version, port=0)
+        response = self.service._service_wrapper.GetState(None, None)
+        from ares_datamodel.connection import connection_state_pb2
+        self.assertEqual(response.state, connection_state_pb2.State.ACTIVE)
+
+    def test_get_analysis_parameters(self):
+        """Test GetAnalysisParameters returns correctly configured parameters."""
+        self.service = AresAnalyzerService(self.analyze_func, self.analyzer_name, self.analyzer_version, port=0)
+        self.service.add_analysis_parameter("Voltage", ares_data_models.AresDataType.NUMBER, optional=False)
+        
+        response = self.service._service_wrapper.GetAnalysisParameters(None, None)
+        self.assertIn("Voltage", response.parameter_schema.fields)
+        self.assertEqual(response.parameter_schema.fields["Voltage"].type, ares_data_type_pb2.AresDataType.NUMBER)
+
+    def test_get_connection_status(self):
+        """Test GetConnectionStatus returns CONNECTED."""
+        self.service = AresAnalyzerService(self.analyze_func, self.analyzer_name, self.analyzer_version, port=0)
+        response = self.service._service_wrapper.GetConnectionStatus(None, None)
+        from ares_datamodel.connection import connection_status_pb2
+        self.assertEqual(response.status, connection_status_pb2.AresStatus.CONNECTED)
+
+    def test_async_execution_logic(self):
+        """Test that the service can handle an awaitable analyze function."""
+        import asyncio
+        
+        async def async_analyze(request):
+            return AnalysisResponse(result=200.0, outcome=Outcome.SUCCESS)
+            
+        self.service = AresAnalyzerService(async_analyze, self.analyzer_name, self.analyzer_version, port=0)
+        mock_request = analyzer_service.AnalysisRequest()
+        
+        # This will likely fail currently due to the bug identified in analysis_service.py
+        response = self.service._service_wrapper.Analyze(mock_request, None)
+        self.assertEqual(response.result, 200.0)
+        self.assertEqual(response.analysis_outcome, ares_outcome_enum_pb2.SUCCESS)
+ 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
