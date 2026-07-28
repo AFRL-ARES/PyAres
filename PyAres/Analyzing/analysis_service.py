@@ -1,18 +1,12 @@
 # Standard Imports
 import grpc
-import asyncio
-import inspect
-from concurrent import futures
-from typing import Callable, Awaitable, Union, Mapping, Dict, Optional, Any
+from typing import Callable, Awaitable, Union, Mapping, Dict, Optional
 
 # Import generated protobuf and gRPC stubs
 from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2 as analyzer_service
 from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2_grpc as analyzer_service_grpc
 from ares_datamodel.analyzing import analysis_pb2
 from ares_datamodel.analyzing import analyzer_capabilities_pb2
-from ares_datamodel.connection import connection_state_pb2
-from ares_datamodel.connection import connection_status_pb2
-from ares_datamodel.connection import connection_info_pb2
 from ares_datamodel import ares_data_schema_pb2
 from ares_datamodel import ares_outcome_enum_pb2
 
@@ -20,45 +14,23 @@ from ares_datamodel import ares_outcome_enum_pb2
 from ..Utils import ares_struct_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_outcome_utils
-from ..Utils import ares_value_utils
+from ..Utils.ares_service_base import AresServiceWrapperBase, AresBaseService
 
 # Import python models
-from ..Models import ares_data_models, RequestMetadata, Limits, AresSchemaEntry
-from .analyzer_models import AnalysisRequest, AnalysisResponse, InfoResponse
+from ..Models import ares_data_models, RequestMetadata, AresSchemaEntry
+from .analyzer_models import AnalysisRequest, AnalysisResponse
 
 # Type hints for the user's custom logic
 AnalyzeLogicFunction = Callable[[AnalysisRequest], Union[AnalysisResponse, Awaitable[AnalysisResponse]]]
 
-class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerServiceServicer):
+class AresAnalyzerServiceWrapper(AresServiceWrapperBase, analyzer_service_grpc.AresRemoteAnalyzerServiceServicer):
     """
     A wrapper around the gRPC service to expose native Python objects for analysis.
     """
-    def __init__(self, info: InfoResponse, timeout: int, custom_analysis_logic: AnalyzeLogicFunction):
-        self._info = info
-        self._timeout = timeout
+    def __init__(self, name: str, version: str, description: str, timeout: int, custom_analysis_logic: AnalyzeLogicFunction):
+        super().__init__(name, version, description, timeout)
         self._custom_analysis_logic = custom_analysis_logic
-        self._settings: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
         self._analysis_parameters: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
-
-    def GetInfo(self, request, context) -> connection_info_pb2.InfoResponse:
-        print("Info Requested!")
-        try:
-            response = connection_info_pb2.InfoResponse(
-            name=self._info.name,
-            version=self._info.version,
-            description=self._info.description)
-        
-            return response
-
-        except Exception as e:
-            response = connection_info_pb2.InfoResponse(
-                name="ERROR",
-                version="ERROR",
-                description="Error fetching information"
-            )
-            print(f"Exception while trying to respond to ARES with information! {e}")
-            return response
-
 
     def Analyze(self, request: analyzer_service.AnalysisRequest, context) -> analysis_pb2.Analysis:
         print("Received an analysis request!")
@@ -68,17 +40,12 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
                 settings=ares_struct_utils.ares_struct_to_dict(request.settings),
                 metadata=RequestMetadata(request.metadata))
 
-            proto_analysis = analysis_pb2.Analysis()
             python_response = self._custom_analysis_logic(python_request)
-
-            if inspect.isawaitable(python_response):
-                async def resolve(awaitable):
-                    return await awaitable
-
-                python_response = asyncio.run(resolve(python_response))
+            python_response = self._resolve_awaitable(python_response)
 
             if not isinstance(python_response, AnalysisResponse):
                 print("Analysis response was an invalid type, ")
+                proto_analysis = analysis_pb2.Analysis()
                 proto_analysis.analysis_outcome = ares_outcome_enum_pb2.FAILURE
                 proto_analysis.error_string = "The user's custom analysis logic returned an invalid type, analysis cannot be processed"
                 return proto_analysis
@@ -94,15 +61,6 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error in custom analysis logic: {e}")
             return analysis_pb2.Analysis(analysis_outcome=ares_outcome_enum_pb2.FAILURE, error_string=str(e))
-        
-    def GetState(self, request, context) -> connection_state_pb2.StateResponse:
-        try:
-            analyzer_state = connection_state_pb2.StateResponse(state=connection_state_pb2.State.ACTIVE)
-            return analyzer_state
-        
-        except Exception as e:
-            print(f"{e}")
-            return connection_state_pb2.StateResponse(state=connection_state_pb2.State.ERROR, state_message=f"Exception while trying to respond to ARES with state! {e}")
 
 
     def GetAnalysisParameters(self, request, context):
@@ -133,12 +91,6 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
             print(f"Exception while trying to respond to ARES capabilities request! {e}") 
             return capabilities
         
-    def GetConnectionStatus(self, request, context):
-        try:
-            return connection_status_pb2.ConnectionStatus(status=connection_status_pb2.AresStatus.CONNECTED)
-
-        except Exception as e:
-            print(f"Exception while trying to respond to ARES with connection status! {e}")
 
     def ValidateInputs(self, request: analyzer_service.ParameterValidationRequest, context): 
         response = analyzer_service.ParameterValidationResult(success=True)
@@ -160,7 +112,7 @@ class AresAnalyzerServiceWrapper(analyzer_service_grpc.AresRemoteAnalyzerService
 
         return response
  
-class AresAnalyzerService:
+class AresAnalyzerService(AresBaseService):
     """
     Manages the gRPC server for the AresAnalyzerService.
     """
@@ -175,121 +127,21 @@ class AresAnalyzerService:
                  max_message_size: int = -1):
         """
         Initializes the AresAnalyzerService.
-
-        Args:
-            custom_analysis_logic (`AnalyzeLogicFunction`): A callable function that will be executed when an Analysis request is received.
-                This function should accept a `PyAres.Analyzing.AnalysisRequest` object and return a
-                `PyAres.Analyzing.Analysis` object (or an awaitable that resolves to one).
-            name (str): The name of your analyzer.
-            version (str): The version of your analyzer.
-            description (str): A brief description of your analyzer.
-            use_localhost (bool): If true, binds to localhost. Otherwise, binds to [::].
-            port (int): The port that your analyzer service will serve on. Defaults to port 7083.
-            max_message_size (int): The max size, in megabytes, of the messages your Analysis service is capable of sending. Increasing this can help transfer data like images, but may result in some loss in performance
         """
+        super().__init__(
+            service_name=name,
+            description=description,
+            version=version,
+            port=port,
+            use_localhost=use_localhost,
+            max_message_size=max_message_size
+        )
 
-        self.info = InfoResponse(name=name, version=version, description=description)
-        self._capabilities = analyzer_capabilities_pb2.AnalyzerCapabilities(settings_schema={})
-        self._port = port
-        server_options = []
-        if max_message_size != -1:
-            print("Setting Custom Max Message Size")
-            server_options.append(('grpc.max_receive_message_length', max_message_size * 1024 * 1024))
-        self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10), options=server_options)
-        self._service_wrapper = AresAnalyzerServiceWrapper(info=self.info, timeout=timeout, custom_analysis_logic=custom_analysis_logic)
-        analyzer_service_grpc.add_AresRemoteAnalyzerServiceServicer_to_server(self._service_wrapper, self._server)
-
-        if use_localhost:
-            self._server.add_insecure_port(f'localhost:{self._port}')
-        else:
-            self._server.add_insecure_port(f'[::]:{self._port}')
-
-    def add_setting(self, 
-                    setting_name: str, 
-                    setting_type: ares_data_models.AresDataType,
-                    default_value: Any = None, 
-                    optional: bool = True, 
-                    constraints: Union[list[int], list[str], list[float]] = [], 
-                    struct_schema: Optional[Dict[str, AresSchemaEntry]] = None, 
-                    limits: Optional[Limits] = None,
-                    description: Optional[str] = None):
-        """
-        Adds an analyzer setting to be reported to ARES when capabilities are requested.
-        While most `PyAres.Models.AresDataType` options are supported, bool arrays and byte arrays
-        cannot be used as the type for your setting values.
-
-        Args:
-            setting_name (str): The name of the setting.
-            setting_type (AresDataType): The type of this settings value.
-            optional (bool): Whether the setting is optional.
-            constraints: An optional list of values to constrain the available setting choices. Can be integers, strings, or floats.
-            struct_schema: An optional dictionary defining the fields of a STRUCT type setting, using AresSchemaEntry objects.
-            limits: An optional limits object used to specify minimum and maximum values for a setting
-            description: An optional string to describe your setting in more detail. Appears in ARES as a tooltip in the settings menu.
-        """
-        try:
-            if default_value is not None:
-                default_ares_value = ares_value_utils.create_ares_value(default_value)
-                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type=setting_type, 
-                                                                                                                    optional=optional, 
-                                                                                                                    choices=constraints, 
-                                                                                                                    struct_schema=struct_schema, 
-                                                                                                                    limits=limits, 
-                                                                                                                    default_value=default_ares_value,
-                                                                                                                    description=description)
-        
-            else:
-                self._service_wrapper._settings[setting_name] = ares_data_schema_utils.create_settings_schema_entry(setting_type=setting_type, 
-                                                                                                                    optional=optional, 
-                                                                                                                    choices=constraints, 
-                                                                                                                    struct_schema=struct_schema, 
-                                                                                                                    limits=limits,
-                                                                                                                    description=description)
-        
-        except Exception as e:
-            print(f"Encountered an exception while adding setting {setting_name}: {e}")
+        self._service_wrapper = AresAnalyzerServiceWrapper(name=name, version=version, description=description, timeout=timeout, custom_analysis_logic=custom_analysis_logic)
+        analyzer_service_grpc.add_AresRemoteAnalyzerServiceServicer_to_server(self._service_wrapper, self.get_server())
 
     def add_analysis_parameter(self, parameter_name: str, parameter_type: ares_data_models.AresDataType, optional: bool = False, struct_schema: Optional[Dict[str, AresSchemaEntry]] = None):
         """
-        Adds an analysis parameter that will be reported to ARES. Analysis parameters are inputs your analyzer accepts from ARES, and will be mapped to command outputs
-        in experiment scripts.
-
-        Args:
-            parameter_name (str): The name of the parameter being created.
-            parameter_type (AresDataType): The type associated with the new parameter.
-            optional (bool): Defaults to false. Determines whether your analyzer requires this information.
-            struct_schema: An optional dictionary defining the fields of a STRUCT type parameter, using AresSchemaEntry objects.
+        Adds an analysis parameter that will be reported to ARES.
         """
         self._service_wrapper._analysis_parameters[parameter_name] = ares_data_schema_utils.create_settings_schema_entry(parameter_type, optional, [], struct_schema)
-
-    def set_timeout(self, new_timeout: int):
-        """
-        Sets the time, in seconds, that ARES will wait to receive a response from this service.
-
-        Args:
-            new_timeout: The new timeout value in seconds.
-        """
-        self._capabilities.timeout_seconds = new_timeout
-
-    def start(self, wait_for_termination: bool = True):
-        """ 
-        Starts the service on the specified port, and waits for termination. 
-        
-        Args:
-            wait_for_termination (bool): A boolean value that determines whether the start method will use the "wait_for_termination" blocking call. 
-            If true, the gRPC service will keep the main thread alive but at the cost of blocking any continued execution of your python logic.
-            Setting this value to false will allow you to continue execution after starting your service, however this should ONLY be done if you have
-            another mechanism for keeping your process alive (such as a GUI, or a loop). Defaults to true.
-        """
-        print(f"Starting Ares Analysis Service on port {self._port}...")
-        self._server.start()
-
-        if wait_for_termination:
-            self._server.wait_for_termination()
-
-    def stop(self):
-        """
-        Stops the service, terminating the connection.
-        """
-        print("Stopping Ares Analyzer Service...")
-        self._server.stop(0).wait()

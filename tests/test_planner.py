@@ -28,7 +28,7 @@ class TestAresPlannerService(unittest.TestCase):
 
     self.assertEqual(self.service.service_name, self.planner_name)
     self.assertEqual(self.service.service_description, self.planner_desc)
-    self.assertEqual(self.service.service_version, self.planner_version)
+    self.assertEqual(self.service.version, self.planner_version)
 
   def test_add_supported_type(self):
     """Test adding a supported data type."""

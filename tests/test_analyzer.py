@@ -24,7 +24,6 @@ class MockGrpcContext:
         raise Exception(f"gRPC Abort: {code} - {details}")
 
 class TestAresAnalyzerService(unittest.TestCase):
-    
     def setUp(self):
         self.captured_request: AnalysisRequest | None = None
 
@@ -56,10 +55,10 @@ class TestAresAnalyzerService(unittest.TestCase):
             self.analyze_func, self.analyzer_name, self.analyzer_version, 
             description=self.analyzer_desc, port=0
         )
-        
-        self.assertEqual(self.service.info.name, self.analyzer_name)
-        self.assertEqual(self.service.info.version, self.analyzer_version)
-        self.assertEqual(self.service.info.description, self.analyzer_desc)
+
+        self.assertEqual(self.service.service_name, self.analyzer_name)
+        self.assertEqual(self.service.version, self.analyzer_version)
+        self.assertEqual(self.service.description, self.analyzer_desc)
 
     def test_configuration(self):
         """Test adding settings and analysis parameters (inputs)."""
