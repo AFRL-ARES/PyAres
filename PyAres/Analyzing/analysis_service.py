@@ -14,6 +14,7 @@ from ares_datamodel import ares_outcome_enum_pb2
 from ..Utils import ares_struct_utils
 from ..Utils import ares_data_schema_utils
 from ..Utils import ares_outcome_utils
+from ..Utils import ares_value_utils
 from ..Utils.ares_service_base import AresServiceWrapperBase, AresBaseService
 
 # Import python models
@@ -32,35 +33,58 @@ class AresAnalyzerServiceWrapper(AresServiceWrapperBase, analyzer_service_grpc.A
         self._custom_analysis_logic = custom_analysis_logic
         self._analysis_parameters: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
 
-    def Analyze(self, request: analyzer_service.AnalysisRequest, context) -> analysis_pb2.Analysis:
+    def Analyze(self, request: analyzer_service.AnalysisRequest, context) -> analysis_pb2.AnalysisResponse:
         print("Received an analysis request!")
         try:
             python_request = AnalysisRequest(
                 inputs=ares_struct_utils.ares_struct_to_dict(request.inputs),
                 settings=ares_struct_utils.ares_struct_to_dict(request.settings),
-                metadata=RequestMetadata(request.metadata))
+                metadata=RequestMetadata(request.metadata),
+            )
 
             python_response = self._custom_analysis_logic(python_request)
             python_response = self._resolve_awaitable(python_response)
 
             if not isinstance(python_response, AnalysisResponse):
-                print("Analysis response was an invalid type, ")
-                proto_analysis = analysis_pb2.Analysis()
-                proto_analysis.analysis_outcome = ares_outcome_enum_pb2.FAILURE
-                proto_analysis.error_string = "The user's custom analysis logic returned an invalid type, analysis cannot be processed"
-                return proto_analysis
-            
-            print("Sending Analysis Response.....")
-            return analysis_pb2.Analysis(
-                result=python_response.result,
-                analysis_outcome=ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome),
-                error_string=python_response.error_string
-            )
-        
+                print("Analysis response was an invalid type.")
+                proto_response = analysis_pb2.AnalysisResponse()
+                proto_response.analysis_outcome = ares_outcome_enum_pb2.FAILURE
+                proto_response.error_string = (
+                    "The user's custom analysis logic returned an invalid type; "
+                    "expected AnalysisResponse."
+                )
+                return proto_response
+
+            if python_response.deprecated_result_usage:
+                print("WARNING: AnalysisResponse(result=...) usage is deprecated and will be "
+                    "removed in a future major version. Please construct objectives explicitly.")
+
+            print("Sending AnalysisResponse.....")
+            proto_response = analysis_pb2.AnalysisResponse()
+
+            for obj in python_response.objectives:
+                obj_proto = analysis_pb2.Objective()
+                obj_proto.objective_name = obj.objective_name
+
+                ares_value_utils.py_to_ares_value(obj.objective_value, obj_proto.objective_value)
+
+                if obj.objective_metadata:
+                    ares_struct_utils.dict_to_ares_struct(obj.objective_metadata, obj_proto.objective_metadata)
+
+                proto_response.objectives.append(obj_proto)
+
+            proto_response.analysis_outcome = (ares_outcome_utils.python_ares_outcome_to_proto_ares_outcome(python_response.outcome))
+            proto_response.error_string = python_response.error_string
+
+            return proto_response
+
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Error in custom analysis logic: {e}")
-            return analysis_pb2.Analysis(analysis_outcome=ares_outcome_enum_pb2.FAILURE, error_string=str(e))
+            proto_response = analysis_pb2.AnalysisResponse()
+            proto_response.analysis_outcome = ares_outcome_enum_pb2.FAILURE
+            proto_response.error_string = str(e)
+            return proto_response
 
 
     def GetAnalysisParameters(self, request, context):
