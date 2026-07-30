@@ -28,6 +28,7 @@ from ..Utils.logging_utils import setup_logger
 # Import python models
 from ..Models import ares_data_models, Limits
 from .planner_models import *
+from ..Analyzing.analyzer_models import Objective
 
 # Type hint for the user's custom planning logic
 PlanLogicFunction = Callable[[PlanRequest], Union[PlanResponse, Awaitable[PlanResponse], List[Plan], Awaitable[List[Plan]]]]
@@ -57,6 +58,35 @@ class AresPlannerServiceWrapper(AresServiceWrapperBase, planner_service_grpc.Are
         return capabilities
 
     
+    def _proto_analysis_data_to_python(self, proto_analysis_data_list) -> list[AnalysisDataEntry]:
+        """
+        Convert a sequence of proto AnalysisData messages into native AnalysisDataEntry objects.
+
+        Each AnalysisDataEntry contains a list of native Objective instances, fully decoupled from the proto layer.
+        """
+        analysis_entries: list[AnalysisDataEntry] = []
+
+        for proto_entry in proto_analysis_data_list:
+            objectives: list[Objective] = []
+
+            # Each proto_entry.analysis_objectives contains analyzing.Objective messages
+            for proto_obj in proto_entry.analysis_objectives:
+                objective_metadata = ares_struct_utils.ares_struct_to_dict(
+                    proto_obj.objective_metadata
+                ) if hasattr(proto_obj, "objective_metadata") else {}
+
+                objectives.append(
+                    Objective(
+                        objective_name=proto_obj.objective_name,
+                        objective_value=ares_value_utils.ares_value_to_py(proto_obj.objective_value),
+                        objective_metadata=objective_metadata,
+                    )
+                )
+
+            analysis_entries.append(AnalysisDataEntry(analysis_objectives=objectives))
+
+        return analysis_entries
+
     def Plan(self, request: plan_pb2.PlanningRequest, context) -> plan_pb2.PlanningResponse:
         """
         Implements the gRPC Plan method. This method converts protobuf requests to native Python objects
@@ -78,12 +108,18 @@ class AresPlannerServiceWrapper(AresServiceWrapperBase, planner_service_grpc.Are
                     initial_value=ares_value_utils.ares_value_to_py(proto_param.initial_value)
                 ))
         
-        python_request = PlanRequest(parameters=parameters, 
-                                     settings=ares_struct_utils.ares_struct_to_dict(request.adapter_settings), 
-                                     analysis_results=list(request.analysis_results),
-                                     metadata=RequestMetadata(request.metadata),
-                                     batch_size=request.batch_size,
-                                     previous_plan_status_codes=[ares_plan_status_code_utils.proto_plan_status_to_python_plan_status(c) for c in request.previous_plan_status_codes])
+        python_request = PlanRequest(
+            parameters=parameters,
+            settings=ares_struct_utils.ares_struct_to_dict(request.adapter_settings),
+            analysis_results=list(request.analysis_results),
+            metadata=RequestMetadata(request.metadata),
+            batch_size=request.batch_size,
+            previous_plan_status_codes=[
+                ares_plan_status_code_utils.proto_plan_status_to_python_plan_status(c)
+                for c in request.previous_plan_status_codes
+            ],
+            analysis_data=self._proto_analysis_data_to_python(request.analysis_data),
+        )
         
         #Handle call using the user's custom planning logic 
         response_proto = plan_pb2.PlanningResponse()

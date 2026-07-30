@@ -1,6 +1,7 @@
 from typing import Dict, Any, List, Sequence, Optional
 from ..Models import Outcome, AresDataType, RequestMetadata, PlanStatusCode
 from enum import Enum
+from ..Analyzing.analyzer_models import Objective
 
 class ParameterHistoryItem:
     """ Represents a single historical parameter item """
@@ -115,6 +116,34 @@ class ParamHistoryInfo:
         self.achieved_value = achieved_value
 
 
+class AnalysisDataEntry:
+    """
+    Represents the analysis data for a single experiment in a planning batch.
+
+    Each entry currently exposes a list of analysis objectives as native Python objects.
+    """
+    def __init__(self, analysis_objectives: List[Objective]):
+        """
+        Initializes an AnalysisDataEntry.
+
+        Args:
+            analysis_objectives: A list of Objective instances produced by the analyzer.
+        """
+        self.analysis_objectives = analysis_objectives
+
+    def __str__(self) -> str:
+        if not self.analysis_objectives:
+            return "AnalysisDataEntry(objectives: (none))"
+        objectives_str = ", ".join(
+            f"{obj.objective_name}={obj.objective_value}"
+            for obj in self.analysis_objectives
+        )
+        return f"AnalysisDataEntry(objectives: [{objectives_str}])"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+
 class PlanRequest:
     """
     Represents a PlanRequest message received from ARES.
@@ -127,16 +156,23 @@ class PlanRequest:
                 analysis_results: Sequence[float],
                 metadata: RequestMetadata = RequestMetadata.from_default_values(),
                 batch_size: int = 1,
-                previous_plan_status_codes: List[PlanStatusCode] = None):
+                previous_plan_status_codes: List[PlanStatusCode] = None,
+                analysis_data: Optional[List[AnalysisDataEntry]] = None):
         """
         Initializes a PlanRequest.
 
         Args:
             parameters: A list of PlanningParameter objects.
+            settings: A dictionary of adapter settings associated with this request.
+            analysis_results: A deprecated sequence of numeric analysis results. This will be removed in a future major release.
+            metadata: Additional request metadata from ARES.
+            batch_size: The number of plans requested from this planner.
+            previous_plan_status_codes: A list of status codes associated with previously planned experiments.
+            analysis_data: A list of AnalysisDataEntry objects, one per experiment, containing analyzer-produced objectives.
         """
         self.parameters = parameters
         self.settings = settings
-        self.analysis_results = analysis_results
+        self._analysis_results = list(analysis_results)
         self.batch_size = batch_size
         self.request_metadata = metadata
 
@@ -145,10 +181,13 @@ class PlanRequest:
         else:    
             self.previous_plan_status_codes = previous_plan_status_codes
 
+        self.analysis_data: List[AnalysisDataEntry] = analysis_data or []
+
     def __str__(self) -> str:
         param_str = "\n ".join(self.parameter_names)
         settings_str = "\n ".join([f"{k}: {v}" for k, v in self.settings.items()])
-        analysis_str = "\n ".join([f"{i}: {val}" for i, val in enumerate(self.analysis_results)])
+        analysis_results_str = "\n ".join([f"{i}: {val}" for i, val in enumerate(self._analysis_results)])
+        analysis_data_str = "\n ".join([f"{i}: {val}" for i, val in enumerate(self.analysis_data)])
         
         metadata_str = str(self.request_metadata).replace('\n', '\n ')
         return (f"PlanRequest object with:\n"
@@ -157,7 +196,9 @@ class PlanRequest:
                 f"settings:\n"
                 f"{settings_str}\n"
                 f"analysis_results:\n"
-                f"{analysis_str}\n"
+                f"{analysis_results_str}\n"
+                f"analysis_data:\n"
+                f"{analysis_data_str}\n"
                 f"request_metadata:\n"
                 f"{metadata_str}"
                 f"batch_size:\n"
@@ -180,12 +221,42 @@ class PlanRequest:
     @property
     def parameter_names(self) -> list[str]:
         return [p.name for p in self.parameters]
+
     @property
-    def planned_parameter_table(self) ->list:
+    def planned_parameter_table(self) -> list:
         return [p.planned_values for p in self.parameters]
+
     @property
-    def acheived_parameter_table(self) ->list:
+    def acheived_parameter_table(self) -> list:
         return [p.achieved_values for p in self.parameters]
+
+    @property
+    def analysis_results(self) -> list[float]:
+        """
+        Deprecated numeric analysis results.
+
+        Accessing this property will emit a DeprecationWarning. Use `analysis_data`
+        (and its contained objectives) instead.
+        """
+        import warnings
+        warnings.warn(
+            "PlanRequest.analysis_results is deprecated and will be removed in a future major release. "
+            "Use PlanRequest.analysis_data instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._analysis_results
+
+    @analysis_results.setter
+    def analysis_results(self, value: Sequence[float]):
+        self._analysis_results = list(value)
+
+    @property
+    def analysis_objectives(self) -> List[List[Objective]]:
+        """
+        Convenience property that returns a list of objective lists, one per experiment.
+        """
+        return [entry.analysis_objectives for entry in self.analysis_data]
 
     
 class PlanResponse:
