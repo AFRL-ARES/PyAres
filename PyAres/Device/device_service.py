@@ -2,7 +2,6 @@ import grpc
 import inspect
 import time
 import warnings
-from concurrent import futures
 from typing import Dict, Callable, Awaitable, Union, Any, Optional
 
 from ares_datamodel.device.remote import ares_remote_device_service_pb2 as device_service
@@ -23,6 +22,7 @@ from ..Utils import ares_struct_utils
 from ..Utils import ares_value_utils
 from ..Utils import ares_data_type_utils
 from ..Utils import device_status_code_utils
+from ..Utils.ares_service_base import AresServiceWrapperBase, AresBaseService
 
 # Type hint for the user's custom methods
 EnterSafeModeMethod = Callable[[], None]
@@ -30,15 +30,19 @@ AllowedReturns = Union[DeviceCommandResponse, Dict[str, Any], Any]
 DeviceCommandMethod = Callable[..., AllowedReturns]
 DeviceStateMethod = Callable[[], Dict[str, Any]]
 
-class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServicer):
+class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresRemoteDeviceServiceServicer):
   """
   A wrapper around the gRPC service to expose native Python objects for devices
   """
 
-  def __init__(self, device_name: str, description: str, version: str, enter_safe_mode: EnterSafeModeMethod, update_device_state: DeviceStateMethod):
+  def __init__(self, device_name: str, description: str, version: str, timeout: int, enter_safe_mode: EnterSafeModeMethod, update_device_state: DeviceStateMethod):
+    super().__init__(service_name=device_name, version=version, description=description, timeout=timeout)
+
+    # Preserve public attributes for backwards compatibility
     self.device_name = device_name
     self.description = description
     self.version = version
+
     self._enter_safe_mode = enter_safe_mode
     self._update_device_state = update_device_state
     self._setting_schema: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
@@ -48,13 +52,16 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
     self._command_methods: Dict[str, Callable] = {}
 
   def GetOperationalStatus(self, request, context) -> device_status_pb2.DeviceOperationalStatus:
-    return device_status_pb2.DeviceOperationalStatus(operational_state=device_status_pb2.OperationalState.ACTIVE, message=f"{self.device_name} is active!")
+    return device_status_pb2.DeviceOperationalStatus(
+      operational_state=device_status_pb2.OperationalState.ACTIVE,
+      message=f"{self._service_name} is active!"
+    )
 
   def GetInfo(self, request, context) -> device_service.DeviceInfoResponse:
     info = device_service.DeviceInfoResponse()
-    info.name = self.device_name
-    info.description = self.description
-    info.version = self.version
+    info.name = self._service_name
+    info.description = self._description
+    info.version = self._version
     return info
   
   def GetCommands(self, request, context) -> device_service.CommandsResponse:
@@ -249,7 +256,7 @@ class AresDeviceServiceWrapper(device_service_grpc.AresRemoteDeviceServiceServic
     except grpc.RpcError as e:
       print(f"gRPC error occured in device state stream")
 
-class AresDeviceService:
+class AresDeviceService(AresBaseService):
   """ Manages the gRPC service for the AresDeviceSerivce """
   def __init__(self, 
                enter_safe_mode_logic: EnterSafeModeMethod, 
@@ -257,8 +264,10 @@ class AresDeviceService:
                device_name: str,
                description: str, 
                version: str, 
+               timeout: int = 30,
                use_localhost: bool = True, 
-               port: int = 7100):
+               port: int = 7100,
+               max_message_size: int = -1):
     """
     Initializes the AresDeviceService
     
@@ -270,22 +279,28 @@ class AresDeviceService:
       device_name (str): The name description of your device.
       description (str): A brief description of your device.
       version (str): The version associated with your device implementation.
+      timeout (int): Timeout in seconds for service calls reported to ARES.
       use_localhost (bool): An optional value that allows the user to specify whether to host the service on the local network. Defaults to True.
       port (int): The port that your device service will serve on. Defaults to port 7100.
+      max_message_size (int): Maximum message size for gRPC. Defaults to -1 (use library default).
     """
 
+    super().__init__(
+      service_name=device_name,
+      description=description,
+      version=version,
+      port=port,
+      use_localhost=use_localhost,
+      max_message_size=max_message_size
+    )
+
+    # Preserve these public attributes for backwards compatibility
     self.device_name = device_name
     self.description = description
     self.version = version
 
-    self._port = port
-    self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    self._service_wrapper = AresDeviceServiceWrapper(device_name, description, version, enter_safe_mode_logic, get_device_state_logic)
-    device_service_grpc.add_AresRemoteDeviceServiceServicer_to_server(self._service_wrapper, self._server)
-    if(use_localhost):
-      self._server.add_insecure_port(f'localhost:{self._port}')
-    else:
-      self._server.add_insecure_port(f'[::]:{self._port}')
+    self._service_wrapper = AresDeviceServiceWrapper(device_name, description, version, timeout, enter_safe_mode_logic, get_device_state_logic)
+    device_service_grpc.add_AresRemoteDeviceServiceServicer_to_server(self._service_wrapper, self.get_server())
 
   def add_new_command(self, cmd_descriptor: DeviceCommandDescriptor, method):
     """
@@ -345,12 +360,13 @@ class AresDeviceService:
     """
 
     print(f"Starting Ares Device Service on port {self._port}...")
-    self._server.start()
+    server = self.get_server()
+    server.start()
 
     if wait_for_termination:
-      self._server.wait_for_termination()
+      server.wait_for_termination()
 
   def stop(self):
     """ Stops the service, terminating the connection. """
     print("Stopping Ares Device Service...")
-    self._server.stop(0).wait()    
+    self.get_server().stop(0).wait()    

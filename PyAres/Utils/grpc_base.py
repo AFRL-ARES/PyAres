@@ -4,6 +4,7 @@ import logging
 from typing import Optional
 
 from .logging_utils import setup_logger
+from .metadata_interceptors import DatamodelVersionServerInterceptor
 
 class AresGrpcServiceBase:
     """
@@ -27,7 +28,11 @@ class AresGrpcServiceBase:
             self._logger.info(f"Setting Custom Max Message Size: {max_message_size} MB")
             server_options.append(('grpc.max_receive_message_length', max_message_size * 1024 * 1024))
         
-        self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10), options=server_options)
+        self._server = grpc.server(
+            futures.ThreadPoolExecutor(max_workers=10),
+            options=server_options,
+            interceptors=[DatamodelVersionServerInterceptor()],
+        )
         
         if use_localhost:
             self._server.add_insecure_port(f'localhost:{self._port}')
