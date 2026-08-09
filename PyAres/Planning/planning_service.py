@@ -190,7 +190,7 @@ class AresPlannerService:
             service_name (str): The name descriptor that is associated with your planner service.
             service_description (str): A brief description describing your implementation of the planner service.
             service_version (str): The version of your planner service.
-            use_localhost (bool): An optional value that allows the user to specify whether to host the service on the local network. Defaults to True.
+            use_localhost (bool): An optional value that allows the user to specify whether to host the service on the local network or remote(if remote, it'll listen to all addresses). Defaults to True.
             port (int): The port that your planner service will serve on. Defaults to port 7082.
             max_message_size (int): The max size, in megabytes, of the messages your Planning service is capable of sending. Increasing this can help transfer heavy data like images, but may result in some loss in performance
         """

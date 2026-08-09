@@ -178,7 +178,7 @@ class AresAnalyzerService:
             name (str): The name of your analyzer.
             version (str): The version of your analyzer.
             description (str): A brief description of your analyzer.
-            use_localhost (bool): If true, binds to localhost. Otherwise, binds to [::].
+            use_localhost (bool): If true, binds to localhost. Otherwise, binds to [::], which is all IP addresses that exist on the computer the serrvicec is running on.
             port (int): The port that your analyzer service will serve on. Defaults to port 7083.
             max_message_size (int): The max size, in megabytes, of the messages your Analysis service is capable of sending. Increasing this can help transfer data like images, but may result in some loss in performance
         """

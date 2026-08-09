@@ -270,7 +270,7 @@ class AresDeviceService:
       device_name (str): The name description of your device.
       description (str): A brief description of your device.
       version (str): The version associated with your device implementation.
-      use_localhost (bool): An optional value that allows the user to specify whether to host the service on the local network. Defaults to True.
+      use_localhost (bool): An optional value that allows the user to specify whether to host the service on the local network or remote(if remote, it'll listen to all addresses). Defaults to True.
       port (int): The port that your device service will serve on. Defaults to port 7100.
     """
 
