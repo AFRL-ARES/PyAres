@@ -28,7 +28,7 @@ class TestAresPlannerService(unittest.TestCase):
 
     self.assertEqual(self.service.service_name, self.planner_name)
     self.assertEqual(self.service.service_description, self.planner_desc)
-    self.assertEqual(self.service.service_version, self.planner_version)
+    self.assertEqual(self.service.version, self.planner_version)
 
   def test_add_supported_type(self):
     """Test adding a supported data type."""
@@ -94,8 +94,9 @@ class TestAresPlannerService(unittest.TestCase):
     self.assertIn("Test Setting", request.settings)
     self.assertEqual(request.settings["Test Setting"], 1.0)
 
-    parameter_names = [x.parameter_name for x in response.planned_parameters]
-    parameter_values = [ares_value_utils.ares_value_to_py(x.parameter_value) for x in response.planned_parameters]
+    first_plan = response.plans[0]
+    parameter_names = [x.parameter_name for x in first_plan.planned_parameters]
+    parameter_values = [ares_value_utils.ares_value_to_py(x.parameter_value) for x in first_plan.planned_parameters]
 
     self.assertIsInstance(response, plan_pb2.PlanningResponse)
     self.assertEqual(parameter_names, ["test_param"])

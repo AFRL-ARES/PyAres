@@ -8,6 +8,14 @@ def plan(request: PlanRequest) -> PlanResponse:
   gpdoods = []
   names = []
 
+  for i in range(len(request.analysis_results)):
+    currentAnalysis = request.analysis_results[i]
+
+    for j in range(len(currentAnalysis.objectives)):
+      currentObjective : Objective = currentAnalysis.objectives[j]
+      print(f"Analysis Result {i}: Objective number {j} is named {currentObjective.objective_name} and has a value of {currentObjective.objective_value}")
+
+    
   for param in request.parameters:
     if param.planner_name == "GPRDood":
       gpdoods.append(param)
