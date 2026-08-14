@@ -204,9 +204,9 @@ class PlanResponse:
             parameter_names: A list of names associated with planned parameters.
             parameter_values: A list of values associated with planned parameters. 
             parameter_data: A python dictionary of key:value pairs of planned parameters and planned values
-            outcome: An enum of type Outcome that determines whether the planning process succeeded or not, defaults to SUCCESS
+            outcome: An enum of type Outcome that determines whether the planning process succeeded or not, defaults to SUCCESS. Failure will cause experiment to stop
             error_string: An optional string for specifying planning failure reasons to be relayed to ARES
-            objective_status: An optional value that specifies the status of the objective your planner is trying to achieve (if any)
+            objective_status: An optional value that specifies the status of the objective your planner is trying to achieve (if any), It is used to determine when an experiment should stop
         """
         if parameter_data is not None:
             self.parameter_names = list(parameter_data.keys())
