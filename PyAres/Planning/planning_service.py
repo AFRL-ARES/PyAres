@@ -1,32 +1,24 @@
 import grpc
-import inspect
-import asyncio
-from concurrent import futures
 from typing import Callable, Awaitable, Union, Dict
 
 from ares_datamodel.planning.remote import ares_remote_planner_service_pb2_grpc as planner_service_grpc
 from ares_datamodel.planning import planner_pb2
 from ares_datamodel.planning import planner_service_capabilities_pb2
 from ares_datamodel.planning import plan_pb2
-from ares_datamodel import ares_data_schema_pb2
 from ares_datamodel import ares_data_type_pb2
 from ares_datamodel import ares_outcome_enum_pb2
-from ares_datamodel.connection import connection_state_pb2
-from ares_datamodel.connection import connection_info_pb2
 from ares_datamodel import ares_struct_pb2
 
 # Import Utilities
 from ..Utils import ares_value_utils
-from ..Utils import ares_data_schema_utils
 from ..Utils import ares_data_type_utils
 from ..Utils import ares_struct_utils
 from ..Utils import ares_plan_status_code_utils
 from ..Utils import plan_response_utils
 from ..Utils.ares_service_base import AresServiceWrapperBase, AresBaseService
-from ..Utils.logging_utils import setup_logger
 
 # Import python models
-from ..Models import ares_data_models, Limits
+from ..Models import ares_data_models
 from .planner_models import *
 from ..Analyzing.analyzer_models import Objective
 
@@ -37,12 +29,13 @@ class AresPlannerServiceWrapper(AresServiceWrapperBase, planner_service_grpc.Are
     """
     A wrapper around the gRPC service to expose native Python objects for planning
     """
-    def __init__(self, service_name: str, version: str, description: str, timeout: int, custom_plan_logic: PlanLogicFunction):
+    def __init__(self, service_name: str, version: str, description: str, timeout: int, custom_plan_logic: PlanLogicFunction, multi_objective_capable: bool = False):
         super().__init__(service_name, version, description, timeout)
         self._custom_plan_logic: PlanLogicFunction = custom_plan_logic
         self._current_settings: Dict[str, ares_struct_pb2.AresValue] = {}
         self._planner_options: list[planner_pb2.Planner] = []
         self._supported_types: list[ares_data_type_pb2.AresDataType] = []
+        self._multi_objective_capable: bool = multi_objective_capable
 
     def GetPlannerServiceCapabilities(self, request, context) -> planner_service_capabilities_pb2.PlannerServiceCapabilities:
         print("Capabilities Requested!")
@@ -50,6 +43,7 @@ class AresPlannerServiceWrapper(AresServiceWrapperBase, planner_service_grpc.Are
         capabilities.service_name = self._service_name
         capabilities.accepted_types.extend(self._supported_types)
         capabilities.available_planners.extend(self._planner_options)
+        capabilities.multi_objective_capable = self._multi_objective_capable
 
         for(key, value) in self._settings.items():
             capabilities.settings_schema.fields[key].CopyFrom(value)
@@ -170,9 +164,21 @@ class AresPlannerService(AresBaseService):
                  timeout: int = 30, 
                  use_localhost: bool = True, 
                  port: int = 7082,
-                 max_message_size: int = -1):
+                 max_message_size: int = -1,
+                 multi_objective_capable: bool = False):
         """
         Initializes the AresPlannerService
+
+        Args:
+            custom_plan_logic: The method that should be called whenever your planner is asked to provide planned values.
+            service_name: The friendly name to be associated with your planning service.
+            service_description: A brief description of your planning service and it's capabilities.
+            service_version: A version that is associated with your planner service.
+            timeout: A timeout value that determines how long ARES will wait, in seconds, expecting a response from your planner. Defaults to 30 seconds.
+            use_localhost: If set to true, hosts the planner service via localhost. Setting to false will host the planner on your network, useful if you need remote access. Defaults to true.
+            port: The port your planner will use for communications. Defaults to 7082.
+            max_message_size: The max size, in megabytes, of the messages your service will be able to handle. Defaults to -1, meaning your service will use the protobuf default of 4MB.
+            multi_objective_capable: A boolean value that tells ARES whether your planner is capable of planning over multiple analysis objective values, defaults to False.
         """
         super().__init__(
             service_name=service_name,
@@ -186,7 +192,7 @@ class AresPlannerService(AresBaseService):
         # For backwards compatibility with anyone accessing service_description directly
         self.service_description = service_description
 
-        self._service_wrapper = AresPlannerServiceWrapper(service_name, service_version, service_description, timeout, custom_plan_logic)
+        self._service_wrapper = AresPlannerServiceWrapper(service_name, service_version, service_description, timeout, custom_plan_logic, multi_objective_capable)
         planner_service_grpc.add_AresRemotePlannerServiceServicer_to_server(self._service_wrapper, self.get_server())
 
     def add_planner_option(self, planner_name: str, planner_description: str, planner_version: str):

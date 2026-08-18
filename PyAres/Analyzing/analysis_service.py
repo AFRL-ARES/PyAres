@@ -32,6 +32,7 @@ class AresAnalyzerServiceWrapper(AresServiceWrapperBase, analyzer_service_grpc.A
         super().__init__(name, version, description, timeout)
         self._custom_analysis_logic = custom_analysis_logic
         self._analysis_parameters: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
+        self._objective_outputs: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
 
     def Analyze(self, request: analyzer_service.AnalysisRequest, context) -> analysis_pb2.AnalysisResponse:
         print("Received an analysis request!")
@@ -104,10 +105,15 @@ class AresAnalyzerServiceWrapper(AresServiceWrapperBase, analyzer_service_grpc.A
     def GetAnalyzerCapabilities(self, request, context) -> analyzer_capabilities_pb2.AnalyzerCapabilities:
         print("Capabilities Requested!")
         capabilities = analyzer_capabilities_pb2.AnalyzerCapabilities(timeout_seconds=self._timeout)
+
         try:
             for(key, value) in self._settings.items():
                 settings_entry = capabilities.settings_schema.fields[key]
                 settings_entry.CopyFrom(value)
+
+            for(key, value) in self._objective_outputs.items():
+                objective_entry = capabilities.objective_output_schema.fields[key]
+                objective_entry.CopyFrom(value)
             
             return capabilities
 
@@ -169,3 +175,10 @@ class AresAnalyzerService(AresBaseService):
         Adds an analysis parameter that will be reported to ARES.
         """
         self._service_wrapper._analysis_parameters[parameter_name] = ares_data_schema_utils.create_settings_schema_entry(parameter_type, optional, [], struct_schema)
+
+    def add_objective_output(self, objective_name: str, objective_type: ares_data_models.AresDataType, objective_description: str = "", optional: bool = False, struct_schema: Optional[Dict[str, AresSchemaEntry]] = None):
+        """
+        Adds an analysis objective to the advertised outputs of this analyzer.
+        """
+
+        self._service_wrapper._objective_outputs[objective_name] = ares_data_schema_utils.create_settings_schema_entry(objective_type, optional, [], struct_schema, description=objective_description)

@@ -96,25 +96,6 @@ class PlanningParameter:
     @property
     def bounds(self) -> list:
         return [self.minimum_value, self.maximum_value]
-    
-
-class ParamHistoryInfo:
-    """
-    Represents the history of a given parameter.
-
-    Designed to provide a more user-friendly abstraction for interacting with a param history object.
-    """
-    def __init__(self, planned_value: Any, achieved_value: Any):
-        """
-        Initializes a ParamHistoryInfo.
-
-        Args:
-            planned_value (Any): The value given directly from the planner.
-            achieved_value (Any): An optional value that represents the real world achieved value, which may differ from the planners target value.
-        """
-        self.planned_value = planned_value
-        self.achieved_value = achieved_value
-
 
 class AnalysisDataEntry:
     """
@@ -260,7 +241,7 @@ class PlanRequest:
 
     
 class PlanResponse:
-    """ Represents a PlanResponse message to be send to ARES. """
+    """ Represents a PlanResponse message to be sent to ARES. """
     def __init__(self, 
                  parameter_names: Optional[list[str]] = None,
                  parameter_values: Optional[list] = None,
