@@ -68,7 +68,7 @@ if __name__ == "__main__":
   name = "Python Test Planner"
   version = "1.0.0"
   description = "This is a test planner to demonstrate working with PyAres to create planners!"
-  pythonDemoPlanner = AresPlannerService(plan, name, description, version, multi_objective_capable=True)
+  pythonDemoPlanner = AresPlannerService(plan, name, description, version)
 
   #Add Supported Types
   pythonDemoPlanner.add_supported_type(AresDataType.NUMBER)
