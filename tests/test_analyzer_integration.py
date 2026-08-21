@@ -67,7 +67,10 @@ class TestAresAnalyzerIntegration(unittest.TestCase):
         response = self.stub.Analyze(request)
         
         # Verify results
-        self.assertEqual(response.result, 20.0)
+        self.assertEqual(len(response.objectives), 1)
+        objective = response.objectives[0]
+
+        self.assertEqual(objective.objective_value.number_value, 20.0)
         self.assertEqual(response.analysis_outcome, 1) # SUCCESS
 
     def test_remote_capabilities(self):

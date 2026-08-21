@@ -1,4 +1,4 @@
-from PyAres import AresAnalyzerService, AnalysisRequest, AnalysisResponse, AresDataType, Outcome, Limits
+from PyAres import *
 
 def analyze_sample(request: AnalysisRequest) -> AnalysisResponse:
     # 1. Extract inputs
@@ -6,15 +6,17 @@ def analyze_sample(request: AnalysisRequest) -> AnalysisResponse:
     raw_value = request.inputs.get("Growth_Metric")
 
     if raw_value is None:
-        return AnalysisResponse(result=0.0, outcome=Outcome.FAILURE)
+        return AnalysisResponse(objectives=[], outcome=Outcome.FAILURE, error_string="No raw value provided, cannot analyze")
     
     # 2. Perform Logic
     print(f"Analyzing sample with value: {raw_value}")
     
-    calculated_score = raw_value * 1.5 
+    calculated_score = raw_value * 1.5
+
+    objective_score = Objective("Calculated Score", calculated_score) 
     
     # 3. Return Result
-    return AnalysisResponse(result=calculated_score, outcome=Outcome.SUCCESS)
+    return AnalysisResponse(objectives=[objective_score], outcome=Outcome.SUCCESS)
 
 if __name__ == "__main__":
     service = AresAnalyzerService(
