@@ -1,7 +1,7 @@
 import unittest
 from PyAres import AresAnalyzerService, Outcome
 from PyAres.Models import ares_data_models
-from PyAres.Analyzing.analyzer_models import AnalysisRequest, AnalysisResponse
+from PyAres.Analyzing.analyzer_models import AnalysisRequest, AnalysisResponse, Objective
 from ares_datamodel.analyzing.remote import ares_remote_analyzer_service_pb2 as analyzer_service
 from ares_datamodel.analyzing import analysis_pb2
 from ares_datamodel import ares_data_type_pb2, ares_outcome_enum_pb2, ares_data_schema_pb2
@@ -148,9 +148,13 @@ class TestAresAnalyzerService(unittest.TestCase):
         self.assertEqual(request.inputs["Voltage"], 5.5)        
         self.assertEqual(request.settings["Mode"], "Fast")
         self.assertEqual(request.request_metadata.experiment_id, "EXP-001")
-        self.assertIsInstance(response, analysis_pb2.Analysis)
+        self.assertIsInstance(response, analysis_pb2.AnalysisResponse)
         self.assertEqual(response.analysis_outcome, ares_outcome_enum_pb2.SUCCESS)
-        self.assertEqual(response.result, 100.0)
+        self.assertEqual(len(response.objectives), 1)
+
+        objective = response.objectives[0]
+        self.assertEqual(objective.objective_name, "result")
+        self.assertEqual(objective.objective_value.number_value, 100.0)
 
     def test_error_handling(self):
         """Test that user exceptions are caught gracefully."""
@@ -217,8 +221,131 @@ class TestAresAnalyzerService(unittest.TestCase):
         
         # This will likely fail currently due to the bug identified in analysis_service.py
         response = self.service._service_wrapper.Analyze(mock_request, None)
-        self.assertEqual(response.result, 200.0)
+        self.assertEqual(len(response.objectives), 1)
         self.assertEqual(response.analysis_outcome, ares_outcome_enum_pb2.SUCCESS)
+
+        objective = response.objectives[0]
+        self.assertEqual(objective.objective_name, "result")
+        self.assertEqual(objective.objective_value.number_value, 200.0)
+
+
+    def test_analyze_explicit_objectives_and_metadata(self):
+        """Test that explicit objectives and metadata are converted correctly."""
+
+        def objective_analyze(request: AnalysisRequest) -> AnalysisResponse:
+            return AnalysisResponse(
+                outcome=Outcome.SUCCESS,
+                error_string="",
+                objectives=[
+                    Objective(
+                        objective_name="score",
+                        objective_value=42.0,
+                        objective_metadata={"tag": "primary", "run": 1},
+                    ),
+                    Objective(
+                        objective_name="label",
+                        objective_value="PASS",
+                        objective_metadata={},
+                    ),
+                ],
+            )
+
+        self.service = AresAnalyzerService(
+            objective_analyze,
+            self.analyzer_name,
+            self.analyzer_version,
+            port=0,
+        )
+
+        mock_request = analyzer_service.AnalysisRequest()
+        
+        ares_struct_utils.dict_to_ares_struct({"Voltage": 5.5}, mock_request.inputs)
+        ares_struct_utils.dict_to_ares_struct({"Mode": "Fast"},  mock_request.settings)
+
+        response = self.service._service_wrapper.Analyze(mock_request, MockGrpcContext())
+
+        self.assertIsInstance(response, analysis_pb2.AnalysisResponse)
+        self.assertEqual(response.analysis_outcome, ares_outcome_enum_pb2.SUCCESS)
+        self.assertEqual(len(response.objectives), 2)
+
+        score_obj = response.objectives[0]
+        self.assertEqual(score_obj.objective_name, "score")
+        self.assertEqual(score_obj.objective_value.number_value, 42.0)
+        self.assertIn("tag", score_obj.objective_metadata.fields)
+        self.assertIn("run", score_obj.objective_metadata.fields)
+        self.assertEqual(score_obj.objective_metadata.fields["tag"].string_value, "primary")
+        self.assertEqual(score_obj.objective_metadata.fields["run"].number_value, 1)
+
+        label_obj = response.objectives[1]
+        self.assertEqual(label_obj.objective_name, "label")
+        self.assertEqual(label_obj.objective_value.string_value, "PASS")
+        self.assertEqual(len(label_obj.objective_metadata.fields), 0)
+
+    def test_analyze_invalid_return_type(self):
+        """Test that an invalid return type yields a FAILURE response."""
+
+        def bad_analyze(request: AnalysisRequest):
+            return None
+
+        self.service = AresAnalyzerService(
+            bad_analyze, "BadAnalyzer", "1.0", port=0
+        )
+
+        mock_context = MockGrpcContext()
+        mock_request = analyzer_service.AnalysisRequest()
+
+        response = self.service._service_wrapper.Analyze(mock_request, mock_context)
+
+        self.assertIsInstance(response, analysis_pb2.AnalysisResponse)
+        self.assertEqual(response.analysis_outcome, ares_outcome_enum_pb2.FAILURE)
+        self.assertIn("invalid type", response.error_string)
+
+    def test_analyze_failure_outcome_and_error_string(self):
+        """Test that failure outcome and error_string propagate correctly."""
+
+        def failure_analyze(request: AnalysisRequest) -> AnalysisResponse:
+            return AnalysisResponse(
+                outcome=Outcome.FAILURE,
+                error_string="Domain-specific failure",
+                objectives=[],
+            )
+
+        self.service = AresAnalyzerService(
+            failure_analyze, "FailureAnalyzer", "1.0", port=0
+        )
+
+        mock_request = analyzer_service.AnalysisRequest()
+        response = self.service._service_wrapper.Analyze(
+            mock_request, MockGrpcContext()
+        )
+
+        self.assertIsInstance(response, analysis_pb2.AnalysisResponse)
+        self.assertEqual(response.analysis_outcome, ares_outcome_enum_pb2.FAILURE)
+        self.assertEqual(response.error_string, "Domain-specific failure")
+        self.assertEqual(len(response.objectives), 0)
+
+    def test_deprecated_result_usage_still_working(self):
+        """Test that deprecated result usage still produces a 'result' objective."""
+
+        def deprecated_analyze(request: AnalysisRequest) -> AnalysisResponse:
+            return AnalysisResponse(result=123.0, outcome=Outcome.SUCCESS)
+
+        self.service = AresAnalyzerService(
+            deprecated_analyze, "DeprecatedAnalyzer", "1.0", port=0
+        )
+
+        mock_request = analyzer_service.AnalysisRequest()
+        response = self.service._service_wrapper.Analyze(
+            mock_request, MockGrpcContext()
+        )
+
+        self.assertIsInstance(response, analysis_pb2.AnalysisResponse)
+        self.assertEqual(response.analysis_outcome, ares_outcome_enum_pb2.SUCCESS)
+        self.assertEqual(len(response.objectives), 1)
+
+        objective = response.objectives[0]
+        self.assertEqual(objective.objective_name, "result")
+        self.assertEqual(objective.objective_value.number_value, 123.0)
  
 if __name__ == '__main__':
     unittest.main(verbosity=2)

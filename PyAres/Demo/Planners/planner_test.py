@@ -8,12 +8,12 @@ def plan(request: PlanRequest) -> PlanResponse:
   gpdoods = []
   names = []
 
-  for i in range(len(request.analysis_results)):
-    currentAnalysis = request.analysis_results[i]
+  for objective_set in request.analysis_objectives:
+    print(f"Received a total of {len(request.analysis_objectives)} objective sets")
 
-    for j in range(len(currentAnalysis.objectives)):
-      currentObjective : Objective = currentAnalysis.objectives[j]
-      print(f"Analysis Result {i}: Objective number {j} is named {currentObjective.objective_name} and has a value of {currentObjective.objective_value}")
+    for objective in objective_set:
+      print(f"Objective Name: {objective.objective_name}")
+      print(f"Objective Value: {objective.objective_value}")
 
     
   for param in request.parameters:

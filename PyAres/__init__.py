@@ -10,6 +10,7 @@ from .Analyzing import AresAnalyzerService
 from .Analyzing import AnalysisResponse
 from .Analyzing import AnalysisRequest
 from .Analyzing import InfoResponse
+from .Analyzing import Objective
 from .Device import AresDeviceService
 from .Device import DeviceCommandDescriptor
 from .Device import DeviceSchemaEntry
