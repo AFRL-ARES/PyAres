@@ -3,12 +3,13 @@ from PyAres.Utils import ares_data_schema_utils
 from PyAres.Models import AresDataType, AresSchemaEntry
 from ares_datamodel import ares_data_type_pb2
 
+
 class TestAresDataSchemaUtils(unittest.TestCase):
     def test_create_simple_entry(self):
         entry = ares_data_schema_utils.create_settings_schema_entry(
-            AresDataType.STRING, 
-            optional=True, 
-            choices=[]
+            AresDataType.STRING,
+            optional=True,
+            choices=[],
         )
         self.assertEqual(entry.type, ares_data_type_pb2.AresDataType.STRING)
         self.assertTrue(entry.optional)
@@ -18,7 +19,7 @@ class TestAresDataSchemaUtils(unittest.TestCase):
         entry = ares_data_schema_utils.create_settings_schema_entry(
             AresDataType.STRING,
             optional=False,
-            choices=choices
+            choices=choices,
         )
         self.assertEqual(entry.string_choices.strings, choices)
 
@@ -27,7 +28,7 @@ class TestAresDataSchemaUtils(unittest.TestCase):
         entry = ares_data_schema_utils.create_settings_schema_entry(
             AresDataType.NUMBER,
             optional=False,
-            choices=choices
+            choices=choices,
         )
         self.assertEqual(entry.number_choices.numbers, choices)
 
@@ -40,7 +41,7 @@ class TestAresDataSchemaUtils(unittest.TestCase):
             entry = ares_data_schema_utils.create_settings_schema_entry(
                 py_type,
                 optional=False,
-                choices=[]
+                choices=[],
             )
             self.assertEqual(entry.type, proto_type)
 
@@ -50,7 +51,7 @@ class TestAresDataSchemaUtils(unittest.TestCase):
         entry = ares_data_schema_utils.create_settings_schema_entry(
             AresDataType.STRING,
             optional=False,
-            choices=choices
+            choices=choices,
         )
 
         self.assertEqual(len(entry.string_choices.strings), 0)
@@ -61,7 +62,7 @@ class TestAresDataSchemaUtils(unittest.TestCase):
             type=AresDataType.NUMBER,
             optional=True,
             description="Test Desc",
-            choices=[1.0, 2.0]
+            choices=[1.0, 2.0],
         )
         proto = ares_data_schema_utils.convert_ares_schema_entry_to_proto(py_entry)
         self.assertEqual(proto.type, ares_data_type_pb2.AresDataType.NUMBER)
@@ -73,16 +74,33 @@ class TestAresDataSchemaUtils(unittest.TestCase):
         nested_field = AresSchemaEntry(type=AresDataType.STRING, description="Inner")
         struct_entry = AresSchemaEntry(
             type=AresDataType.STRUCT,
-            struct_schema={"inner_key": nested_field}
+            struct_schema={"inner_key": nested_field},
         )
-        
+
         proto = ares_data_schema_utils.convert_ares_schema_entry_to_proto(struct_entry)
         self.assertEqual(proto.type, ares_data_type_pb2.AresDataType.STRUCT)
         self.assertIn("inner_key", proto.struct_schema.fields)
-        
+
         inner_proto = proto.struct_schema.fields["inner_key"]
         self.assertEqual(inner_proto.type, ares_data_type_pb2.AresDataType.STRING)
         self.assertEqual(inner_proto.description, "Inner")
+
+    def test_list_element_schema_in_create_entry(self):
+        element_entry = AresSchemaEntry(
+            type=AresDataType.STRING,
+            description="List element",
+        )
+        entry = ares_data_schema_utils.create_settings_schema_entry(
+            AresDataType.LIST,
+            optional=False,
+            choices=[],
+            list_element_schema=element_entry,
+        )
+
+        self.assertEqual(entry.type, ares_data_type_pb2.AresDataType.LIST)
+        self.assertEqual(entry.list_element_schema.type, ares_data_type_pb2.AresDataType.STRING)
+        self.assertEqual(entry.list_element_schema.description, "List element")
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

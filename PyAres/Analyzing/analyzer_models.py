@@ -1,6 +1,8 @@
 from typing import Dict, Any, List, Optional
 import warnings
-from ..Models import Outcome, RequestMetadata
+from ..Models import Outcome, RequestMetadata, AresDataType, AresSchemaEntry
+from ares_datamodel import ares_data_schema_pb2
+from ..Utils import ares_data_type_utils
 
 class AnalysisRequest:
     """ Represents an analysis request received from ARES. """
@@ -45,6 +47,100 @@ class Objective:
     
     def __repr__(self) -> str:
         return self.__str__()
+
+
+class ObjectiveSchema:
+    """A schema representing the expected form of an objective."""
+
+    def __init__(
+        self,
+        objective_name: str,
+        proto_objective_schema: ares_data_schema_pb2.AresValueSchema,
+    ):
+        self.objective_name = objective_name
+        # Convert basic scalar fields
+        self.objective_type: AresDataType = ares_data_type_utils.proto_ares_type_to_python_ares_type(proto_objective_schema.type)
+        self.objective_description: str = proto_objective_schema.description
+        self.optional: bool = proto_objective_schema.optional
+
+        # Convert nested struct schema, if present
+        self.struct_schema: Optional[Dict[str, AresSchemaEntry]] = None
+        if proto_objective_schema.struct_schema.fields:
+            self.struct_schema = {}
+            for field_name, field_schema in proto_objective_schema.struct_schema.fields.items():
+                self.struct_schema[field_name] = self._proto_value_schema_to_ares_schema_entry(field_schema)
+
+        # Convert list element schema, if present
+        self.list_element_schema: Optional[AresSchemaEntry] = None
+        # Treat type UNKNOWN (0) as "no list element schema configured"
+        if proto_objective_schema.list_element_schema.type != 0:
+            self.list_element_schema = self._proto_value_schema_to_ares_schema_entry(
+                proto_objective_schema.list_element_schema
+            )
+
+    @staticmethod
+    def _proto_value_schema_to_ares_schema_entry(
+        proto: ares_data_schema_pb2.AresValueSchema,
+    ) -> AresSchemaEntry:
+        """Convert a proto AresValueSchema into a Python AresSchemaEntry."""
+        py_type = ares_data_type_utils.proto_ares_type_to_python_ares_type(proto.type)
+
+        # Extract choices if present
+        choices: List[Any] = []
+        if proto.string_choices.strings:
+            choices = list(proto.string_choices.strings)
+        elif proto.number_choices.numbers:
+            choices = list(proto.number_choices.numbers)
+
+        entry = AresSchemaEntry(
+            type=py_type,
+            optional=proto.optional,
+            description=proto.description,
+            choices=choices,
+            struct_schema=None,
+            list_element_schema=None,
+            min_number_value=getattr(proto, "min_number_value", None),
+            max_number_value=getattr(proto, "max_number_value", None),
+        )
+
+        # Nested struct schema
+        if proto.struct_schema.fields:
+            entry.struct_schema = {}
+            for field_name, field_schema in proto.struct_schema.fields.items():
+                entry.struct_schema[field_name] = ObjectiveSchema._proto_value_schema_to_ares_schema_entry(
+                    field_schema
+                )
+
+        # Nested list element schema
+        if proto.list_element_schema.type != 0:
+            entry.list_element_schema = ObjectiveSchema._proto_value_schema_to_ares_schema_entry(
+                proto.list_element_schema
+            )
+
+        return entry
+
+    def __str__(self) -> str:
+        struct_keys = list(self.struct_schema.keys()) if self.struct_schema else []
+        list_elem_type = (
+            self.list_element_schema.type.name
+            if self.list_element_schema and hasattr(self.list_element_schema.type, "name")
+            else None
+        )
+
+        return (
+            f"ObjectiveSchema(\n"
+            f"  objective_name={self.objective_name!r},\n"
+            f"  objective_type={self.objective_type.name if hasattr(self.objective_type, 'name') else self.objective_type},\n"
+            f"  objective_description={self.objective_description!r},\n"
+            f"  optional={self.optional},\n"
+            f"  struct_schema_keys={struct_keys},\n"
+            f"  list_element_type={list_elem_type}\n"
+            f")"
+        )
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class AnalysisResponse:
     """ Represents the result of an analysis process using objectives. 
@@ -139,8 +235,7 @@ class InfoResponse:
     """ A response message that provides basic information about your analyzer. """   
 
     def __init__(self, name: str, version: str, description: str = ""):
-        """
-        Initializes a new InfoResponse message.
+        """Initializes a new InfoResponse message.
 
         Args:
             name: The name of your analyzer, to be displayed in ARES.
@@ -151,6 +246,3 @@ class InfoResponse:
         self.name = name
         self.version = version
         self.description = description
-
-
-        
