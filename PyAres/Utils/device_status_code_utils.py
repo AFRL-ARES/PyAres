@@ -11,7 +11,7 @@ def proto_status_code_to_python_status_code(proto_value:  command_status_code_pb
   return StatusCode(proto_value)
 
 def determine_success(code: StatusCode) -> bool:
-  if code == StatusCode.COMMAND_SUCCESS or code == StatusCode.SUCCESS_WITH_WARNGINGS:
+  if code == StatusCode.COMMAND_SUCCESS or code == StatusCode.SUCCESS_WITH_WARNINGS:
     return True
   
   else:
