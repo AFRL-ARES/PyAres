@@ -19,6 +19,11 @@ dependencies = [
     "ares-datamodel >= 0.36.0",
 ]
 
+[project.optional-dependencies]
+visualization = [
+    "plotly >= 5.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/AFRL-ARES/PyAres"
 
