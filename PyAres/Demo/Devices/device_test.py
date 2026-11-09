@@ -1,5 +1,5 @@
 from PyAres import *
-from typing import Dict
+from PyAres.Device.device_models import StateItem
 import pint
 import time
 
@@ -14,11 +14,17 @@ class DemoDevice:
     return DeviceCommandResponse(None, status_code=StatusCode.COMMAND_SUCCESS)
 
   def get_temperature(self):
-    return DeviceCommandResponse(self.temperature, status_code=StatusCode.COMMAND_SUCCESS)
+    return DeviceCommandResponse(self.temperature, status_code=StatusCode.COMMAND_FAILED)
   
-  def get_device_state(self) -> Dict:
-    state_dict = { "temperature": self.temperature }
-    return state_dict
+  def get_device_state(self) -> list[StateItem]:
+    return [
+      StateItem(
+        name="Current Temperature",
+        value=self.temperature,
+        index=0,
+        display_on_UI=True,
+      )
+    ]
   
   def enter_safe_mode(self):
     self.temperature = 0
@@ -30,13 +36,14 @@ if __name__ == "__main__":
   device_name = "Demo Device"
   description = "A device to demonstrate the PyAres device capabilities"
   version = "1.0.0"
-  device_service = AresDeviceService(device.enter_safe_mode, device.get_device_state, device_name, description, version, False)
+  device_service = AresDeviceService(device.enter_safe_mode, device.get_device_state, device_name, description, version, False, port=7101)
 
   # Create the "Set Temperature" Command
   quantity_schema = QuantitySchema(ureg.degree_Celsius, 40.0, 125.0)
-  parameter_schema = DeviceSchemaEntry(AresDataType.QUANTITY, "A numeric temperature value", quantity_schema=quantity_schema)
+  ui_schema = WidgetDescriptor(WidgetType.NUMERIC_INPUT)
+  parameter_schema = DeviceSchemaEntry(AresDataType.QUANTITY, "A numeric temperature value", quantity_schema=quantity_schema, user_interface_description=ui_schema)
   input_schema = { "temperature": parameter_schema }
-  set_temp_descriptor = DeviceCommandDescriptor("Set Temperature", "Set's the temperature of the demo device to the provided value.", input_schema, {})
+  set_temp_descriptor = DeviceCommandDescriptor("Set Temperature", "Set's the temperature of the demo device to the provided value.", input_schema, {}, render_in_ui=True)
   device_service.add_new_command(set_temp_descriptor, device.set_temperature)
 
   # Create the "Get Temperature" Command

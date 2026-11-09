@@ -1,4 +1,5 @@
 from PyAres import *
+from PyAres.Device.device_models import StateItem
 
 class RotaryMixer:
     def __init__(self, speed):
@@ -18,8 +19,14 @@ def get_speed():
     return DeviceCommandResponse(mixer.speed, status_code=StatusCode.COMMAND_SUCCESS)
 
 def get_status():
-    # Return a dictionary matching your state schema
-    return { "rpm": mixer.speed } 
+    return [
+        StateItem(
+            name="Mixer Speed",
+            value=mixer.speed,
+            index=0,
+            display_on_UI=True,
+        )
+    ]
 
 def safe_mode():
     print("Stopping motor immediately!")
@@ -31,7 +38,7 @@ service = AresDeviceService(
     "Rotary Mixer", 
     "High-speed mixer control", 
     "1.0.0",
-    port=7101
+    port=7103
 )
 
 # 3. Define the 'Set Speed' Command

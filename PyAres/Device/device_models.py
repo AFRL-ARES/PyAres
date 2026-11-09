@@ -1,7 +1,31 @@
 from enum import Enum
-from dataclasses import dataclass, field
-from typing import Dict, Union, Optional, Any
+from dataclasses import dataclass
+from typing import Dict, Union, Optional, Any, List
 from ..Models import ares_data_models
+
+class WidgetType(Enum):
+  WIDGET_UNSPECIFIED = 0
+  NUMERIC_INPUT = 1
+  NUMERIC_SLIDER = 2
+  BOOLEAN_TOGGLE = 3
+  STRING_INPUT = 4
+  DROPDOWN = 5
+  READ_ONLY = 6
+
+class WidgetDescriptor:
+  """ A class for defining how an input parameter is displayed in the ARES UI """
+
+  def __init__(self, widget_type: WidgetType, slider_step_size: Optional[float] = 1.0):
+    """
+    Initializes a new User Interface Widget for taking in an input parameter for a command displayed on the ARES dashboard
+
+    Args:
+      widget_type (WidgetType): The type of widget you want generated for this input.
+      slider_step_size (Optional[float]): An optional float value that sets the step size of a slider widget.
+    """
+
+    self.widget_type = widget_type
+    self.slider_step_size = slider_step_size
 
 class DeviceSchemaEntry:
   """ A class that describes an input or output parameter for a device command """
@@ -15,7 +39,8 @@ class DeviceSchemaEntry:
                struct_schema: Optional[Dict[str, 'DeviceSchemaEntry']] = None,
                list_element_schema: Optional['DeviceSchemaEntry'] = None,
                min_number_value: Optional[float] = None,
-               max_number_value: Optional[float] = None):
+               max_number_value: Optional[float] = None,
+               user_interface_description: Optional[WidgetDescriptor] = None):
     """
     Initializes a new DeviceSchemaEntry
 
@@ -30,6 +55,7 @@ class DeviceSchemaEntry:
       list_element_schema (DeviceSchemaEntry): Optional schema for list elements
       min_number_value (float): Optional minimum value for numeric types
       max_number_value (float): Optional maximum value for numeric types
+      user_interface_description (WidgetDescriptor): Optional UI component identifier for the client renderer
     """
 
     self.type = type
@@ -42,10 +68,11 @@ class DeviceSchemaEntry:
     self.list_element_schema = list_element_schema
     self.min_number_value = min_number_value
     self.max_number_value = max_number_value
+    self.user_interface_description = user_interface_description
 
 class DeviceCommandDescriptor:
   """ A class that contains all the necessary information to describe a device command """
-  def __init__(self, name: str, description: str, input_schema: Dict[str, DeviceSchemaEntry], output_schema: Dict[str, DeviceSchemaEntry]):
+  def __init__(self, name: str, description: str, input_schema: Dict[str, DeviceSchemaEntry], output_schema: Dict[str, DeviceSchemaEntry], render_in_ui: bool = False):
     """
     Initializes a new instance of the device command descriptor class.
 
@@ -54,25 +81,37 @@ class DeviceCommandDescriptor:
       description (str): The description of this device command.
       input_schema (list[ares_data_models.AresDataType]): A dictionary that defines the input parameters to the device command.
       output_schema (list[ares_data_models.AresDataType]): A dictionary that defines the output parameters to the device command.
+      render_in_ui (bool): A boolean value that defaults to false, if set to true means the command will be usable via the dashboard in ARES
     """
     self.name = name
     self.description = description
     self.input_schema = input_schema
     self.output_schema = output_schema
+    self.render_in_UI = render_in_ui
 
 class StatusCode(Enum):
-    STATUS_UNSPECIFIED = 0
-    COMMAND_SUCCESS = 1
-    SUCCESS_WITH_WARNINGS = 2
-    COMMAND_FAILED = 3
-    INVALID_COMMAND = 4
-    HARDWARE_FAULT = 5
-    EMERGENCY_STOP = 6
-    OUT_OF_RANGE = 7
-    PARAMETERS_UNACHIEVEABLE = 8
+  STATUS_UNSPECIFIED = 0
+  COMMAND_SUCCESS = 1
+  SUCCESS_WITH_WARNINGS = 2
+  COMMAND_FAILED = 3
+  INVALID_COMMAND = 4
+  HARDWARE_FAULT = 5
+  EMERGENCY_STOP = 6
+  OUT_OF_RANGE = 7
+  PARAMETERS_UNACHIEVEABLE = 8
 
 @dataclass
 class DeviceCommandResponse:
-    response: Union[Dict[str, Any], Any]
-    error_string: str = ""
-    status_code: StatusCode = StatusCode.STATUS_UNSPECIFIED
+  response: Union[Dict[str, Any], Any]
+  error_string: str = ""
+  status_code: StatusCode = StatusCode.STATUS_UNSPECIFIED
+
+@dataclass
+class StateItem:
+  """ An individual state item on an ARES device, used to represent one piece of the state data """
+
+  def __init__(self, name: str, value: Any, index: int = -1, display_on_UI: bool = False):
+    self.name = name
+    self.value = value
+    self.display_on_UI = display_on_UI
+    self.index = index

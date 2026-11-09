@@ -1,6 +1,7 @@
 import random
 
 from PyAres import AresDeviceService, AresDataType, DeviceCommandDescriptor, DeviceSchemaEntry
+from PyAres.Device.device_models import StateItem
 
 
 class FailureTestDevice:
@@ -18,8 +19,9 @@ class FailureTestDevice:
         print("[Test Device] Command succeeded and returned 20.")
         return {"number": 20}
 
-    def get_state(self):
-        return {}
+    def get_state(self) -> list[StateItem]:
+        """This test device has no state to report."""
+        return []
 
     def safe_mode(self):
         print("[Test Device] Safe mode triggered.")

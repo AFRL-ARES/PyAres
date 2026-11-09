@@ -1,12 +1,11 @@
-from typing import Union
-
 from ..Device import DeviceCommandDescriptor
 from ..Device import DeviceSchemaEntry
-from ares_datamodel.device import device_command_descriptor_pb2
+from ares_datamodel.device import device_command_descriptor_pb2, device_command_ui_descriptor_pb2
 from ares_datamodel import ares_data_schema_pb2, ares_data_type_pb2
 from ares_datamodel import to_quantity_schema
 
-from . import ares_data_type_utils
+from . import ares_data_type_utils, ares_widget_type_utils
+import warnings
 
 def python_command_description_to_proto(python_description: DeviceCommandDescriptor) -> device_command_descriptor_pb2.DeviceCommandDescriptor:
   proto_description = device_command_descriptor_pb2.DeviceCommandDescriptor()
@@ -28,6 +27,23 @@ def python_command_description_to_proto(python_description: DeviceCommandDescrip
     for key, value in python_description.output_schema.items():
       proto_description.output_schema.struct_schema.fields[key].CopyFrom(python_device_schema_entry_to_proto(value))
 
+  if python_description.render_in_UI:
+    for key, value in python_description.input_schema.items():
+      if value.user_interface_description is not None:
+        converted_widget = ares_widget_type_utils.python_ares_outcome_to_proto_ares_outcome(value.user_interface_description.widget_type)
+        new_widget = device_command_ui_descriptor_pb2.WidgetDescriptor(associated_input=key, widget_type=converted_widget)
+
+        if value.user_interface_description.slider_step_size is not None:
+          new_widget.slider_step_size = value.user_interface_description.slider_step_size
+        
+        proto_description.widget_descriptors.append(new_widget)
+
+  else:
+    for key, value in python_description.input_schema.items():
+      if value.user_interface_description is not None:
+        warnings.warn(f"A description was provided for the command {python_description.name} but rendering in the UI is disabled." + 
+                      "Please set 'render_in_UI' to True if you want to render this command in your UI")
+        
   proto_description.name = python_description.name
   proto_description.description = python_description.description
 
