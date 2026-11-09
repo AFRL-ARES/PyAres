@@ -2,7 +2,7 @@ import grpc
 import inspect
 import time
 import warnings
-from typing import Dict, Callable, Awaitable, Union, Any, Optional
+from typing import Dict, Callable, Awaitable, Union, Any, Optional, List
 
 from ares_datamodel.device.remote import ares_remote_device_service_pb2 as device_service
 from ares_datamodel.device.remote import ares_remote_device_service_pb2_grpc as device_service_grpc
@@ -13,7 +13,7 @@ from ares_datamodel import ares_data_schema_pb2
 from ares_datamodel import ares_struct_pb2
 from google.protobuf import empty_pb2
 
-from .device_models import DeviceCommandDescriptor
+from .device_models import DeviceCommandDescriptor, StateItem
 from ..Models import Limits
 from .device_models import DeviceCommandDescriptor, DeviceCommandResponse
 from ..Utils import ares_device_command_utils
@@ -28,7 +28,7 @@ from ..Utils.ares_service_base import AresServiceWrapperBase, AresBaseService
 EnterSafeModeMethod = Callable[[], None]
 AllowedReturns = Union[DeviceCommandResponse, Dict[str, Any], Any]
 DeviceCommandMethod = Callable[..., AllowedReturns]
-DeviceStateMethod = Callable[[], Dict[str, Any]]
+DeviceStateMethod = Callable[[], Union[Dict[str, Any], List[StateItem]]]
 
 class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresRemoteDeviceServiceServicer):
   """
@@ -47,7 +47,6 @@ class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresR
     self._update_device_state = update_device_state
     self._setting_schema: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
     self._current_settings: Dict[str, ares_struct_pb2.AresStruct] = {}
-    self._state_schema: Dict[str, ares_data_schema_pb2.AresValueSchema] = {}
     self._commands: list[DeviceCommandDescriptor] = []
     self._command_methods: Dict[str, Callable] = {}
 
@@ -190,19 +189,14 @@ class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresR
     return empty_pb2.Empty()
   
   def GetStateSchema(self, request, context) -> device_service.StateSchemaResponse:
-    response = device_service.StateSchemaResponse()
-    for key, value in self._state_schema.items():
-      settings_entry = response.schema.fields[key]
-      settings_entry.type = value.type
-      settings_entry.optional = value.optional
+    """Return an empty schema for protocol compatibility.
 
-      if len(value.string_choices.strings) != 0:
-        settings_entry.string_choices.strings.extend(value.string_choices.strings)
-
-      elif len(value.number_choices.numbers) != 0:
-        settings_entry.number_choices.numbers.extend(value.number_choices.numbers)
-
-    return response
+    PyAres deliberately treats device state as flexible runtime telemetry rather
+    than requiring devices to register a rigid state schema.  The RPC remains
+    implemented so clients that probe the endpoint receive a valid response
+    instead of an UNIMPLEMENTED error.
+    """
+    return device_service.StateSchemaResponse()
   
   def GetState(self, request, context) -> device_service.DeviceStateResponse:
     response = self._update_device_state()
@@ -210,14 +204,25 @@ class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresR
       response = response.__await__()
 
     proto_response = device_service.DeviceStateResponse()
-    proto_response.state = ares_struct_pb2.AresStruct()
 
-    if not isinstance(response, Dict):
-      print("State Response was invalid. All state responses should be returned in the form of a dictionary.")
+    if isinstance(response, Dict):
+      for key, value in response.items():
+        ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
+
+    elif isinstance(response, list) and all(isinstance(item, StateItem) for item in response):
+      for item in response:
+        proto_state_entry = device_service.StateEntry()
+
+        proto_state_entry.value.CopyFrom(ares_value_utils.create_ares_value(item.value))
+        proto_state_entry.name = item.name
+        proto_state_entry.display_in_ui = item.display_on_UI
+        proto_state_entry.index = item.index
+
+        proto_response.device_state_data.append(proto_state_entry)
+
+    else:
+      print("State Response was invalid. All state responses should be returned in the form of a dictionary or a list of state items.")
       return proto_response
-    
-    for key, value in response.items():
-      ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
 
     return proto_response
       
@@ -239,12 +244,35 @@ class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresR
 
           proto_response = device_service.DeviceStateResponse()
 
-          if not isinstance(response, Dict):
-            print("State Response was invalid. All state responses should be returned in the form of a dictionary.")
-            return proto_response
+          if isinstance(response, Dict):
+            for key, value in response.items():
+              ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
 
-          for key, value in response.items():
-            ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
+          elif isinstance(response, List):
+            for item in response:
+              if isinstance(item, StateItem):
+                try:
+                  proto_state_entry = device_service.StateEntry()
+
+                  proto_state_entry.value.CopyFrom(ares_value_utils.create_ares_value(item.value))
+                  proto_state_entry.name = item.name
+                  proto_state_entry.display_in_ui = item.display_on_UI
+                  proto_state_entry.index = item.index
+
+                  proto_response.device_state_data.append(proto_state_entry)
+
+                except Exception as e:
+                  print("SOMETHING BROKEN :(")
+                  print(e)
+
+              else:
+                print("Malformed State Data Received: All items in list must be StateItems")
+
+
+
+          else:
+            print("State Response was invalid. All state responses should be returned in the form of a dictionary or a list of state items.")
+            return proto_response
 
           yield proto_response
           time.sleep(delay)
@@ -369,4 +397,4 @@ class AresDeviceService(AresBaseService):
   def stop(self):
     """ Stops the service, terminating the connection. """
     print("Stopping Ares Device Service...")
-    self.get_server().stop(0).wait()    
+    self.get_server().stop(0).wait()

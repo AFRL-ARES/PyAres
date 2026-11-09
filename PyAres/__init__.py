@@ -16,6 +16,8 @@ from .Device import DeviceCommandDescriptor
 from .Device import DeviceSchemaEntry
 from .Device import DeviceCommandResponse
 from .Device import StatusCode
+from .Device import WidgetDescriptor
+from .Device import WidgetType
 from .Models import AresDataType
 from .Models import Outcome
 from .Models import AresSchemaEntry

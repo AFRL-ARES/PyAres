@@ -1,6 +1,7 @@
 import random
 
 from PyAres import AresDeviceService, AresDataType, DeviceSchemaEntry, DeviceCommandDescriptor, DeviceCommandResponse, StatusCode
+from PyAres.Device.device_models import StateItem
 
 
 # --- PART 1: The Simulated Hardware ---
@@ -16,8 +17,15 @@ class VirtualRandomNumberDevice:
         return response
 
     def get_state(self):
-        """Required: Tells ARES the current status for logging."""
-        return {"last_number": self.last_number}
+        """Return the latest generated value as an ARES state item."""
+        return [
+            StateItem(
+                name="Last Generated Number",
+                value=self.last_number,
+                index=0,
+                display_on_UI=True,
+            )
+        ]
 
     def safe_mode(self):
         """Required: A safety fallback."""
@@ -36,7 +44,7 @@ if __name__ == "__main__":
         "My Virtual Random Number Device",
         "A simulated device that generates random numbers",
         "1.0.0",
-        port=7101
+        port=7102
     )
 
     # 3. Define Command: Generate Number
