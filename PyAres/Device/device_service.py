@@ -210,12 +210,12 @@ class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresR
       for key, value in response.items():
         ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
 
-    elif isinstance(response, List[StateItem]):
+    elif isinstance(response, list) and all(isinstance(item, StateItem) for item in response):
       for item in response:
         proto_state_entry = device_service.StateEntry()
 
         proto_state_entry.value.CopyFrom(ares_value_utils.create_ares_value(item.value))
-        proto_state_entry.name = proto_state_entry.name
+        proto_state_entry.name = item.name
         proto_state_entry.display_in_ui = item.display_on_UI
         proto_state_entry.index = item.index
 
@@ -254,7 +254,6 @@ class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresR
             for item in response:
               if isinstance(item, StateItem):
                 try:
-                  print("Why is nothing working")
                   proto_state_entry = device_service.StateEntry()
 
                   proto_state_entry.value.CopyFrom(ares_value_utils.create_ares_value(item.value))
