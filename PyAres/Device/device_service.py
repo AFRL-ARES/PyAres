@@ -206,7 +206,6 @@ class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresR
     proto_response = device_service.DeviceStateResponse()
 
     if isinstance(response, Dict):
-      proto_response.state = ares_struct_pb2.AresStruct()
       for key, value in response.items():
         ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
 
@@ -246,7 +245,6 @@ class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresR
           proto_response = device_service.DeviceStateResponse()
 
           if isinstance(response, Dict):
-            proto_response.state = ares_struct_pb2.AresStruct()
             for key, value in response.items():
               ares_struct_utils.add_value_to_struct(proto_response.state, key, ares_value_utils.create_ares_value(value))
 
