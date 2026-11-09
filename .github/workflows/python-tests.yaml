@@ -15,7 +15,7 @@ jobs:
     # Optional: Test across multiple Python versions to ensure compatibility
     strategy:
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.12"]
 
     steps:
     - uses: actions/checkout@v6
