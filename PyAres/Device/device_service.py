@@ -147,11 +147,13 @@ class AresDeviceServiceWrapper(AresServiceWrapperBase, device_service_grpc.AresR
         if isinstance(python_response, Awaitable):
             python_response = python_response.__await__()
 
+        return empty_pb2.Empty()
+    
     except Exception as e:
         #Handle errors from user's logic
         context.set_code(grpc.StatusCode.INTERNAL)
         context.set_details(f"Error in safe mode logic: {e}")
-  
+
   def GetSettingsSchema(self, request, context) -> device_service.SettingsSchemaResponse:
     response = device_service.SettingsSchemaResponse()
     for key, value in self._setting_schema.items():
